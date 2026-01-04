@@ -1,68 +1,5 @@
 <?php
-// ==========================================================
-// 1. DATABASE CONNECTION
-// ==========================================================
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$dbname     = "ink_and_solace";
-$port       = 3307;
-
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
-
-// ==========================================================
-// 2. SEARCH LOGIC
-// ==========================================================
-$publisher_search = "";
-$title_search     = "";
-$has_results      = false; 
-$results_list     = [];
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $publisher_search = trim($_POST['publisher'] ?? "");
-    $title_search     = trim($_POST['title'] ?? "");
-
-    // Only search if at least one field has text
-    if(!empty($publisher_search) || !empty($title_search)) {
-
-        // ==========================================================
-        // SQL QUERY - Join titles, publishers, authors
-        // ==========================================================
-        $sql = "SELECT t.title AS book_title, 
-                       p.pub_name AS publisher_name, 
-                       CONCAT(a.au_fname, ' ', a.au_lname) AS author_name
-                FROM titles t
-                LEFT JOIN publishers p ON t.pub_id = p.pub_id
-                LEFT JOIN titleauthor ta ON t.title_id = ta.title_id
-                LEFT JOIN authors a ON ta.au_id = a.au_id
-                WHERE t.title LIKE ? OR p.pub_name LIKE ?
-                ORDER BY t.title";
-
-        $stmt = $conn->prepare($sql);
-        if ($stmt) {
-            $title_param = "%" . ($title_search ?: "NO_MATCH_XYZ") . "%";
-            $pub_param   = "%" . ($publisher_search ?: "NO_MATCH_XYZ") . "%";
-            
-            $stmt->bind_param("ss", $title_param, $pub_param);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $has_results = true;
-                while($row = $result->fetch_assoc()) {
-                    $results_list[] = [
-                        'publisher' => $row['publisher_name'] ?? "Unknown",
-                        'title'     => $row['book_title'] ?? "Unknown",
-                        'author'    => $row['author_name'] ?? "Unknown"
-                    ];
-                }
-            }
-            $stmt->close();
-        }
-    }
-}
-$conn->close();
+require_once __DIR__ . "/bc_us_view_pub_title.php";
 ?>
 
 
@@ -385,7 +322,7 @@ $conn->close();
 
 <div class="top-section">
     <img src="assets/text/logo.png" class="logo-top" alt="Logo">
-    <img src="assets/text/title-authors-titles.png" class="page-title-img" alt="Publishers & Authors">
+    <img src="assets/text/title-publishers-titles.png" class="page-title-img" alt="Publishers & Titles">
 </div>
 
 <div class="bottom-section">
@@ -482,4 +419,5 @@ $conn->close();
 <?php endif; ?>
 
 </body>
+
 </html>

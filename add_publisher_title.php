@@ -1,54 +1,9 @@
 <?php
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$dbname     = "ink_and_solace";
-$port       = 3307;
-
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
-
-$publisher_search = trim($_POST['publisher'] ?? "");
-$title_search     = trim($_POST['title'] ?? "");
+$publisher_search = "";
+$title_search     = "";
 $insert_success   = false;
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && !empty($publisher_search) && !empty($title_search)) {
-
-    // ================= GET OR INSERT PUBLISHER =================
-    $stmtPub = $conn->prepare("SELECT pub_id FROM publishers WHERE pub_name = ?");
-    $stmtPub->bind_param("s", $publisher_search);
-    $stmtPub->execute();
-    $stmtPub->bind_result($pub_id);
-    $stmtPub->fetch();
-    $stmtPub->close();
-
-    // Publisher doesn't exist → insert it
-    if (!$pub_id) {
-        $pub_id = uniqid("P"); // Generate unique publisher ID
-        $stmtInsertPub = $conn->prepare("INSERT INTO publishers (pub_id, pub_name) VALUES (?, ?)");
-        $stmtInsertPub->bind_param("ss", $pub_id, $publisher_search);
-        $stmtInsertPub->execute();
-        $stmtInsertPub->close();
-    }
-
-    // ================= INSERT TITLE =================
-    $title_id = uniqid("T"); // Generate unique title ID
-    $stmtTitle = $conn->prepare(
-        "INSERT INTO titles (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, notes, pubdate)
-         VALUES (?, ?, 'Tech', ?, 0, 0, 0, 0, '', NOW())"
-    );
-    $stmtTitle->bind_param("sss", $title_id, $title_search, $pub_id);
-    $stmtTitle->execute();
-    $stmtTitle->close();
-
-    $insert_success = true;
-
-    // Clear inputs
-    $publisher_search = "";
-    $title_search     = "";
-}
-
-$conn->close();
+require_once __DIR__ . "/bc_add_pub_title.php";
 ?>
 
 

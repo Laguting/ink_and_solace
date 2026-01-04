@@ -1,73 +1,6 @@
 <?php
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$dbname     = "ink_and_solace";
-$port       = 3307;
-
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
-
-$publisher_input = trim($_POST['publisher'] ?? "");
-$employee_input  = trim($_POST['employee'] ?? "");
-$found_employees = [];
-$show_results_modal = false;
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $conditions = [];
-    $params = [];
-    $types = "";
-
-    // Filter by publisher if input is not empty
-    if (!empty($publisher_input)) {
-        $conditions[] = "p.pub_name LIKE ?";
-        $params[] = "%" . $publisher_input . "%";
-        $types .= "s";
-    }
-
-    // Filter by employee if input is not empty
-    if (!empty($employee_input)) {
-        $conditions[] = "(e.fname LIKE ? OR e.lname LIKE ?)";
-        $params[] = "%" . $employee_input . "%";
-        $params[] = "%" . $employee_input . "%";
-        $types .= "ss";
-    }
-
-    if (!empty($conditions)) {
-        $sql = "SELECT e.emp_id, e.fname, e.lname, j.job_desc, p.pub_id, p.pub_name
-                FROM employee e
-                LEFT JOIN publishers p ON e.pub_id = p.pub_id
-                LEFT JOIN jobs j ON e.job_id = j.job_id
-                WHERE " . implode(" AND ", $conditions); // combine with AND for proper filtering
-
-        $stmt = $conn->prepare($sql);
-        if ($stmt) {
-            // Dynamically bind parameters
-            $stmt->bind_param($types, ...$params);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            while ($row = $result->fetch_assoc()) {
-                $found_employees[] = [
-                    "emp_id"    => $row['emp_id'],
-                    "pub_id"    => $row['pub_id'],
-                    "publisher" => $row['pub_name'] ?? "N/A",
-                    "name"      => $row['fname'] . " " . $row['lname'],
-                    "job"       => $row['job_desc'] ?? "N/A"
-                ];
-            }
-            $stmt->close();
-        } else {
-            die("SQL Prepare Error: " . $conn->error);
-        }
-    }
-    $show_results_modal = true;
-}
-
-$conn->close();
+require_once __DIR__ . "/bc_view_pub_emp.php";
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -269,7 +202,7 @@ $conn->close();
             <label class="input-label">Publisher</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="publishers" placeholder="SEARCH" value="<?php echo htmlspecialchars($publisher_input); ?>">
+                <input type="text" name="publisher" placeholder="SEARCH" value="<?php echo htmlspecialchars($publisher_input); ?>">
             </div>
         </div>
         <div class="input-group">
