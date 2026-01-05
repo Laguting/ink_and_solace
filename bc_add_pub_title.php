@@ -8,8 +8,8 @@ $insert_success = false;
 if ($publisher && $title) {
 
     /* ============================
-       1. CHECK IF PUBLISHER EXISTS
-    ============================ */
+       1. GET OR CREATE PUBLISHER
+       ============================ */
     $stmt = $conn->prepare(
         "SELECT pub_id FROM publishers WHERE pub_name = ?"
     );
@@ -22,21 +22,18 @@ if ($publisher && $title) {
         $row = $result->fetch_assoc();
         $pub_id = $row['pub_id'];
     } else {
-        // New publisher — generate UNIQUE pub_id
-        do {
-            $pub_id = "P" . rand(1000, 9999);
-            $check = $conn->prepare(
-                "SELECT 1 FROM publishers WHERE pub_id = ?"
-            );
-            $check->bind_param("s", $pub_id);
-            $check->execute();
-            $check->store_result();
-            $exists = $check->num_rows > 0;
-            $check->close();
-        } while ($exists);
+        // Generate SEQUENTIAL pub_id
+        $res = $conn->query("
+            SELECT MAX(CAST(SUBSTRING(pub_id, 2) AS UNSIGNED)) AS max_id
+            FROM publishers
+        ");
+        $row = $res->fetch_assoc();
+        $nextPub = ($row['max_id'] ?? 0) + 1;
+        $pub_id = 'P' . str_pad($nextPub, 3, '0', STR_PAD_LEFT);
 
         $stmtInsert = $conn->prepare(
-            "INSERT INTO publishers (pub_id, pub_name) VALUES (?, ?)"
+            "INSERT INTO publishers (pub_id, pub_name)
+             VALUES (?, ?)"
         );
         $stmtInsert->bind_param("ss", $pub_id, $publisher);
         $stmtInsert->execute();
@@ -45,20 +42,19 @@ if ($publisher && $title) {
     $stmt->close();
 
     /* ============================
-       2. INSERT TITLE
-    ============================ */
-    do {
-        $title_id = "T" . rand(10000, 99999);
-        $check = $conn->prepare(
-            "SELECT 1 FROM titles WHERE title_id = ?"
-        );
-        $check->bind_param("s", $title_id);
-        $check->execute();
-        $check->store_result();
-        $exists = $check->num_rows > 0;
-        $check->close();
-    } while ($exists);
+       2. GENERATE SEQUENTIAL title_id
+       ============================ */
+    $resTitle = $conn->query("
+        SELECT MAX(CAST(SUBSTRING(title_id, 2) AS UNSIGNED)) AS max_id
+        FROM titles
+    ");
+    $rowTitle = $resTitle->fetch_assoc();
+    $nextTitle = ($rowTitle['max_id'] ?? 0) + 1;
+    $title_id = 'T' . str_pad($nextTitle, 3, '0', STR_PAD_LEFT);
 
+    /* ============================
+       3. INSERT TITLE
+       ============================ */
     $stmtTitle = $conn->prepare(
         "INSERT INTO titles
          (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, pubdate)

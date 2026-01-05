@@ -5,65 +5,85 @@ $insert_success = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $publisher_name = trim($_POST['publisher'] ?? ""); // publisher name from form
+    $publisher_name = trim($_POST['publisher'] ?? "");
     $author_name    = trim($_POST['author'] ?? "");
     $book           = trim($_POST['books'] ?? "");
     $count          = intval($_POST['count'] ?? 0);
 
     if ($publisher_name && $book) {
 
-        // ================= GET PUBLISHER ID =================
-        $stmt = $conn->prepare("SELECT pub_id FROM publishers WHERE pub_name = ?");
+        /* ================= GET OR CREATE PUBLISHER ================= */
+        $stmt = $conn->prepare(
+            "SELECT pub_id FROM publishers WHERE pub_name = ?"
+        );
         $stmt->bind_param("s", $publisher_name);
         $stmt->execute();
-        $stmt->bind_result($pub_id);
-        $stmt->fetch();
-        $stmt->close();
+        $result = $stmt->get_result();
 
-        // If publisher doesn't exist, insert new publisher
-        if (!$pub_id) {
-            $pub_id = uniqid("P");
-            $stmt = $conn->prepare("INSERT INTO publishers (pub_id, pub_name) VALUES (?, ?)");
+        if ($result->num_rows === 1) {
+            $row = $result->fetch_assoc();
+            $pub_id = $row['pub_id'];
+        } else {
+            // Generate SEQUENTIAL pub_id
+            $res = $conn->query("
+                SELECT MAX(CAST(SUBSTRING(pub_id, 2) AS UNSIGNED)) AS max_id
+                FROM publishers
+            ");
+            $row = $res->fetch_assoc();
+            $nextPub = ($row['max_id'] ?? 0) + 1;
+            $pub_id = 'P' . str_pad($nextPub, 3, '0', STR_PAD_LEFT);
+
+            $stmt = $conn->prepare(
+                "INSERT INTO publishers (pub_id, pub_name)
+                 VALUES (?, ?)"
+            );
             $stmt->bind_param("ss", $pub_id, $publisher_name);
             $stmt->execute();
             $stmt->close();
         }
 
-        // ================= INSERT TITLE =================
-        $title_id = uniqid("T");
+        /* ================= GENERATE SEQUENTIAL TITLE ID ================= */
+        $resTitle = $conn->query("
+            SELECT MAX(CAST(SUBSTRING(title_id, 2) AS UNSIGNED)) AS max_id
+            FROM titles
+        ");
+        $rowTitle = $resTitle->fetch_assoc();
+        $nextTitle = ($rowTitle['max_id'] ?? 0) + 1;
+        $title_id = 'T' . str_pad($nextTitle, 3, '0', STR_PAD_LEFT);
+
+        /* ================= INSERT TITLE ================= */
         $stmt = $conn->prepare(
-            "INSERT INTO titles (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, pubdate)
+            "INSERT INTO titles
+             (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, pubdate)
              VALUES (?, ?, 'Tech', ?, 0, 0, 0, 0, CURDATE())"
         );
         $stmt->bind_param("sss", $title_id, $book, $pub_id);
         $stmt->execute();
         $stmt->close();
 
-        // ================= INSERT AUTHOR =================
+        /* ================= INSERT AUTHOR (UNCHANGED) ================= */
         if ($author_name) {
             $au_id = uniqid("AU");
             $name_parts = explode(" ", $author_name, 2);
             $au_fname = $name_parts[0];
             $au_lname = $name_parts[1] ?? "";
 
-            // Insert author
             $stmt = $conn->prepare(
-                "INSERT INTO authors (au_id, au_fname, au_lname) VALUES (?, ?, ?)"
+                "INSERT INTO authors (au_id, au_fname, au_lname)
+                 VALUES (?, ?, ?)"
             );
             $stmt->bind_param("sss", $au_id, $au_fname, $au_lname);
             $stmt->execute();
             $stmt->close();
 
-            // Link author to title with au_ord from form
             $stmt = $conn->prepare(
                 "INSERT INTO titleauthor (au_id, title_id, au_ord, royaltyper)
-                VALUES (?, ?, ?, 10)"
+                 VALUES (?, ?, ?, 10)"
             );
             $stmt->bind_param("ssi", $au_id, $title_id, $count);
             $stmt->execute();
             $stmt->close();
         }
-
 
         $insert_success = true;
     }
