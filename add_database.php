@@ -226,7 +226,7 @@
     <div class="bottom-section">
         <div class="banner-container">
             <div class="banner-bg"></div> 
-            <img src="assets/text/label-edit-database.png" alt="Edit Database" class="img-banner-label">
+            <img src="assets/text/label_add_database.png" alt="Add Database" class="img-banner-label">
         </div>
 
         <div class="options-grid">
@@ -271,4 +271,6 @@
     </div>
 
 </body>
+
 </html>
+

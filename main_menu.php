@@ -180,7 +180,7 @@ session_start();
         <a href="add_database.php" class="card-link">
             <div class="card-bg-image img-edit"></div>
             <div class="overlay">
-                <img src="assets/text/label-edit-database.png" alt="Edit Database" class="card-title-img">
+                <img src="assets/text/label_add_database.png" alt="Edit Database" class="card-title-img">
             </div>
         </a>
 
@@ -194,4 +194,5 @@ session_start();
     </div>
 
 </body>
+
 </html>

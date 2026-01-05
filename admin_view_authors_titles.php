@@ -8,7 +8,7 @@ require_once __DIR__ . "/bc_view_au_title.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authors & Titles | Ink & Solace</title>
+    <title>Authors Database | Ink & Solace</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -70,7 +70,7 @@ require_once __DIR__ . "/bc_view_au_title.php";
         .btn-confirm { background-color: var(--btn-grey); color: white; }
         .btn-return { background-color: var(--btn-blue); color: white; }
 
-        /* ================= RESULTS MODAL ================= */
+        /* ================= RESULTS MODAL (LEVEL 1) ================= */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
@@ -87,8 +87,8 @@ require_once __DIR__ . "/bc_view_au_title.php";
             display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         .result-pill-btn:hover { transform: scale(1.02); background-color: #a39e9a; }
-        .pill-author { font-family: 'Cinzel', serif; font-size: 24px; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; }
-        .pill-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 300; opacity: 0.9; font-style: italic; }
+        .pill-publisher { font-family: 'Cinzel', serif; font-size: 24px; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; }
+        .pill-employee { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 300; opacity: 0.9; }
 
         .close-btn { margin-top: 30px; background: transparent; border: 2px solid white; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .close-btn:hover { background: white; color: var(--dark-bg); }
@@ -102,7 +102,8 @@ require_once __DIR__ . "/bc_view_au_title.php";
 
         .detail-card {
             background-color: #3c4456; 
-            width: 800px; max-width: 95%; padding: 40px; 
+            /* Increased width to fit 9 columns */
+            width: 1200px; max-width: 98%; padding: 30px; 
             border-radius: 20px; text-align: center; position: relative; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #5a647d;
         }
@@ -115,21 +116,46 @@ require_once __DIR__ . "/bc_view_au_title.php";
         }
         .close-detail-x:hover { background: #f0f0f0; }
 
-        /* TABLE STYLES */
+        /* TABLE STYLES - UPDATED */
         .info-table {
-            width: 100%; background-color: white; border-collapse: collapse; margin-bottom: 30px;
+            /* 1. fit-content ensures table shrinks to data size */
+            width: fit-content;
+            max-width: 100%;
+
+            /* 2. margin auto centers the table block */
+            margin: 0 auto 30px auto;
+
+            background-color: white; 
+            border-collapse: collapse; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            
+            /* Scroll settings */
+            display: block; 
+            overflow-x: auto;
+            white-space: nowrap;
         }
+
         .info-table th, .info-table td {
-            border: 1px solid #ddd; padding: 15px; text-align: center;
+            border: 1px solid #ddd; 
+            /* Slightly increased padding for better fit-content look */
+            padding: 12px 20px; 
+            text-align: center;
             font-family: 'Montserrat', sans-serif; color: #333; vertical-align: middle;
         }
-        .info-table th { background-color: white; font-weight: 600; font-size: 14px; text-transform: uppercase; }
-        .info-table td { background-color: white; font-weight: 400; font-size: 14px; }
+        .info-table th { background-color: white; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        .info-table td { background-color: white; font-weight: 400; font-size: 13px; }
+
+        /* Ensure wrapper centers the elements inside */
+        #editTableWrapper, #viewTableWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
 
         /* INPUTS IN EDIT TABLE */
         .table-input {
-            width: 100%; border: 1px solid #ccc; padding: 8px; border-radius: 4px;
+            width: 100%; min-width: 60px; border: 1px solid #ccc; padding: 6px; border-radius: 4px;
             font-family: 'Montserrat', sans-serif; text-align: center;
         }
 
@@ -164,8 +190,6 @@ require_once __DIR__ . "/bc_view_au_title.php";
         
         @media (max-width: 950px) {
             .detail-card { width: 95%; padding: 20px; }
-            .info-table th, .info-table td { padding: 10px; font-size: 12px; }
-            .info-table { display: block; overflow-x: auto; }
         }
     </style>
 </head>
@@ -178,19 +202,19 @@ require_once __DIR__ . "/bc_view_au_title.php";
 </div>
 
 <div class="bottom-section">
-    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="search-form">
+    <form method="POST" class="search-form">
         <div class="input-group">
             <label class="input-label">Author</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="author" placeholder="SEARCH" value="<?php echo htmlspecialchars($author_input); ?>">
+                <input type="text" name="publisher" placeholder="SEARCH" value="<?php echo htmlspecialchars($publisher_input); ?>">
             </div>
         </div>
         <div class="input-group">
-            <label class="input-label">Title</label>
+            <label class="input-label">Titles</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="title" placeholder="SEARCH" value="<?php echo htmlspecialchars($title_input); ?>">
+                <input type="text" name="author" placeholder="SEARCH" value="<?php echo htmlspecialchars($author_input); ?>">
             </div>
         </div>
         <div class="btn-container">
@@ -205,25 +229,34 @@ require_once __DIR__ . "/bc_view_au_title.php";
         <div class="modal-content">
             <h2 class="results-heading">RESULTS:</h2>
             <div class="titles-scroll-container">
-                <?php foreach($found_books as $book): 
-                    $id = $book['id'];
-                    $author = $book['author'];
-                    $title = $book['title'];
+                <?php foreach($found_authors as $au): 
+                    // Extracting vars to keep code clean
+                    $id = $au['au_id'];
+                    $lname = $au['au_lname'];
+                    $fname = $au['au_fname'];
+                    $phone = $au['phone'];
+                    $addr = $au['address'];
+                    $city = $au['city'];
+                    $state = $au['state'];
+                    $zip = $au['zip'];
+                    $contract = $au['contract'];
                 ?>
                     <button class="result-pill-btn" type="button" 
                         onclick="openDetailCard(
                             '<?php echo addslashes($id); ?>', 
-                            '<?php echo addslashes($author); ?>', 
-                            '<?php echo addslashes($title); ?>'
+                            '<?php echo addslashes($lname); ?>', 
+                            '<?php echo addslashes($fname); ?>', 
+                            '<?php echo addslashes($phone); ?>', 
+                            '<?php echo addslashes($addr); ?>',
+                            '<?php echo addslashes($city); ?>',
+                            '<?php echo addslashes($state); ?>',
+                            '<?php echo addslashes($zip); ?>',
+                            '<?php echo addslashes($contract); ?>'
                         )">
-                        <span class="pill-author"><?php echo htmlspecialchars($author); ?></span>
-                        <span class="pill-title"><?php echo htmlspecialchars($title); ?></span>
+                        <span class="pill-publisher"><?php echo $found_publisher; ?></span>
+                        <span class="pill-employee"><?php echo $fname . " " . $lname; ?></span>
                     </button>
                 <?php endforeach; ?>
-                
-                <?php if (count($found_books) == 0): ?>
-                    <p style="color:white; font-family:'Montserrat', sans-serif;">No matching results found.</p>
-                <?php endif; ?>
             </div>
             <button class="close-btn" onclick="document.getElementById('resultsModal').style.display='none'">
                 &times;
@@ -240,16 +273,28 @@ require_once __DIR__ . "/bc_view_au_title.php";
             <table class="info-table">
                 <thead>
                     <tr>
-                        <th>Book ID</th>
-                        <th>Author</th>
-                        <th>Book Title</th>
+                        <th>au_id</th>
+                        <th>au_lname</th>
+                        <th>au_fname</th>
+                        <th>phone</th>
+                        <th>address</th>
+                        <th>city</th>
+                        <th>state</th>
+                        <th>zip</th>
+                        <th>contract</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td id="td_id">...</td>
-                        <td id="td_author">...</td>
-                        <td id="td_title">...</td>
+                        <td id="td_lname">...</td>
+                        <td id="td_fname">...</td>
+                        <td id="td_phone">...</td>
+                        <td id="td_addr">...</td>
+                        <td id="td_city">...</td>
+                        <td id="td_state">...</td>
+                        <td id="td_zip">...</td>
+                        <td id="td_contract">...</td>
                     </tr>
                 </tbody>
             </table>
@@ -263,16 +308,28 @@ require_once __DIR__ . "/bc_view_au_title.php";
             <table class="info-table">
                 <thead>
                     <tr>
-                        <th>Book ID</th>
-                        <th>Author</th>
-                        <th>Book Title</th>
+                        <th>au_id</th>
+                        <th>au_lname</th>
+                        <th>au_fname</th>
+                        <th>phone</th>
+                        <th>address</th>
+                        <th>city</th>
+                        <th>state</th>
+                        <th>zip</th>
+                        <th>contract</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><input type="text" id="input_id" class="table-input"></td>
-                        <td><input type="text" id="input_author" class="table-input"></td>
-                        <td><input type="text" id="input_title" class="table-input"></td>
+                        <td><input type="text" id="input_lname" class="table-input"></td>
+                        <td><input type="text" id="input_fname" class="table-input"></td>
+                        <td><input type="text" id="input_phone" class="table-input"></td>
+                        <td><input type="text" id="input_addr" class="table-input"></td>
+                        <td><input type="text" id="input_city" class="table-input"></td>
+                        <td><input type="text" id="input_state" class="table-input"></td>
+                        <td><input type="text" id="input_zip" class="table-input"></td>
+                        <td><input type="text" id="input_contract" class="table-input"></td>
                     </tr>
                 </tbody>
             </table>
@@ -287,7 +344,7 @@ require_once __DIR__ . "/bc_view_au_title.php";
 
 <div class="delete-overlay" id="deleteConfirmModal">
     <div class="delete-box">
-        <h2 class="delete-text">Are you sure you want to delete this?</h2>
+        <h2 class="delete-text">Are you sure you want to delete this author?</h2>
         <div class="delete-btn-container">
             <button class="btn-yes" onclick="confirmDelete()">YES</button>
             <button class="btn-cancel" onclick="closeDeleteConfirmation()">CANCEL</button>
@@ -303,14 +360,20 @@ require_once __DIR__ . "/bc_view_au_title.php";
 </div>
 
 <script>
-    // 1. OPEN MODAL (Table View)
-    function openDetailCard(id, author, title) {
+    // 1. OPEN MODAL (Handles 9 arguments now)
+    function openDetailCard(id, lname, fname, phone, addr, city, state, zip, contract) {
         cancelEditMode(); 
         
         // Fill View Data
         document.getElementById('td_id').innerText = id;
-        document.getElementById('td_author').innerText = author;
-        document.getElementById('td_title').innerText = title;
+        document.getElementById('td_lname').innerText = lname;
+        document.getElementById('td_fname').innerText = fname;
+        document.getElementById('td_phone').innerText = phone;
+        document.getElementById('td_addr').innerText = addr;
+        document.getElementById('td_city').innerText = city;
+        document.getElementById('td_state').innerText = state;
+        document.getElementById('td_zip').innerText = zip;
+        document.getElementById('td_contract').innerText = contract;
         
         document.getElementById('detailModal').style.display = 'flex';
     }
@@ -324,8 +387,14 @@ require_once __DIR__ . "/bc_view_au_title.php";
     function enableEditMode() {
         // Copy text from View Table to Edit Table Inputs
         document.getElementById('input_id').value = document.getElementById('td_id').innerText;
-        document.getElementById('input_author').value = document.getElementById('td_author').innerText;
-        document.getElementById('input_title').value = document.getElementById('td_title').innerText;
+        document.getElementById('input_lname').value = document.getElementById('td_lname').innerText;
+        document.getElementById('input_fname').value = document.getElementById('td_fname').innerText;
+        document.getElementById('input_phone').value = document.getElementById('td_phone').innerText;
+        document.getElementById('input_addr').value = document.getElementById('td_addr').innerText;
+        document.getElementById('input_city').value = document.getElementById('td_city').innerText;
+        document.getElementById('input_state').value = document.getElementById('td_state').innerText;
+        document.getElementById('input_zip').value = document.getElementById('td_zip').innerText;
+        document.getElementById('input_contract').value = document.getElementById('td_contract').innerText;
 
         document.getElementById('viewTableWrapper').style.display = 'none';
         document.getElementById('editTableWrapper').style.display = 'block';
@@ -337,12 +406,18 @@ require_once __DIR__ . "/bc_view_au_title.php";
         document.getElementById('viewTableWrapper').style.display = 'block';
     }
 
-    // 5. SAVE CHANGES (UI Simulation)
+    // 5. SAVE CHANGES
     function saveChanges() {
         // Copy values from Inputs back to View Table
         document.getElementById('td_id').innerText = document.getElementById('input_id').value;
-        document.getElementById('td_author').innerText = document.getElementById('input_author').value;
-        document.getElementById('td_title').innerText = document.getElementById('input_title').value;
+        document.getElementById('td_lname').innerText = document.getElementById('input_lname').value;
+        document.getElementById('td_fname').innerText = document.getElementById('input_fname').value;
+        document.getElementById('td_phone').innerText = document.getElementById('input_phone').value;
+        document.getElementById('td_addr').innerText = document.getElementById('input_addr').value;
+        document.getElementById('td_city').innerText = document.getElementById('input_city').value;
+        document.getElementById('td_state').innerText = document.getElementById('input_state').value;
+        document.getElementById('td_zip').innerText = document.getElementById('input_zip').value;
+        document.getElementById('td_contract').innerText = document.getElementById('input_contract').value;
 
         cancelEditMode();
         
@@ -351,7 +426,7 @@ require_once __DIR__ . "/bc_view_au_title.php";
         document.getElementById('successModal').style.display = 'flex';
     }
 
-    // 6. DELETE LOGIC (UI Simulation)
+    // 6. DELETE LOGIC
     function askDeleteConfirmation() {
         document.getElementById('deleteConfirmModal').style.display = 'flex';
     }
@@ -360,7 +435,7 @@ require_once __DIR__ . "/bc_view_au_title.php";
         document.getElementById('deleteConfirmModal').style.display = 'none';
     }
 
-    function confirmDelete() {
+    function confirmDelete() {a
         closeDeleteConfirmation();
         document.getElementById('successMessageText').innerText = "Entry successfully deleted.";
         document.getElementById('successModal').style.display = 'flex';
