@@ -1,70 +1,81 @@
 <?php
 require_once __DIR__ . "/bc_db_connect.php";
 
-$publisher = trim($_POST['publisher'] ?? "");
-$title     = trim($_POST['title'] ?? "");
-$insert_success = false;
+$show_modal = false;
+$success_message = "";
 
-if ($publisher && $title) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    // --- STEP 2: ADD TITLE ---
+    if (isset($_POST['action']) && $_POST['action'] == 'add_title') {
+        // Generate Title ID (e.g., T4921)
+        $gen_title_id = "T" . rand(1000, 9999);
 
-    /* ============================
-       1. GET OR CREATE PUBLISHER
-       ============================ */
-    $stmt = $conn->prepare(
-        "SELECT pub_id FROM publishers WHERE pub_name = ?"
-    );
-    $stmt->bind_param("s", $publisher);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows === 1) {
-        // Existing publisher
-        $row = $result->fetch_assoc();
-        $pub_id = $row['pub_id'];
-    } else {
-        // Generate SEQUENTIAL pub_id
-        $res = $conn->query("
-            SELECT MAX(CAST(SUBSTRING(pub_id, 2) AS UNSIGNED)) AS max_id
-            FROM publishers
-        ");
-        $row = $res->fetch_assoc();
-        $nextPub = ($row['max_id'] ?? 0) + 1;
-        $pub_id = 'P' . str_pad($nextPub, 3, '0', STR_PAD_LEFT);
-
-        $stmtInsert = $conn->prepare(
-            "INSERT INTO publishers (pub_id, pub_name)
-             VALUES (?, ?)"
+        // Note: Based on your image, 'titles' table has these columns. 
+        // We are using the 'pub_id' passed from Step 1.
+        $stmt = $conn->prepare("INSERT INTO titles (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, notes, pubdate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $stmt->bind_param("ssssddiiss", 
+            $gen_title_id, $_POST['title'], $_POST['type'], $_POST['pub_id'], 
+            $_POST['price'], $_POST['advance'], $_POST['royalty'], $_POST['ytd_sales'], 
+            $_POST['notes'], $_POST['pubdate']
         );
-        $stmtInsert->bind_param("ss", $pub_id, $publisher);
-        $stmtInsert->execute();
-        $stmtInsert->close();
+
+        if ($stmt->execute()) {
+            $show_modal = true;
+            $success_message = "Publisher & Title Successfully Added!";
+        } else {
+            echo "<script>alert('Error: " . $stmt->error . "');</script>";
+        }
+        $stmt->close();
     }
-    $stmt->close();
-
-    /* ============================
-       2. GENERATE SEQUENTIAL title_id
-       ============================ */
-    $resTitle = $conn->query("
-        SELECT MAX(CAST(SUBSTRING(title_id, 2) AS UNSIGNED)) AS max_id
-        FROM titles
-    ");
-    $rowTitle = $resTitle->fetch_assoc();
-    $nextTitle = ($rowTitle['max_id'] ?? 0) + 1;
-    $title_id = 'T' . str_pad($nextTitle, 3, '0', STR_PAD_LEFT);
-
-    /* ============================
-       3. INSERT TITLE
-       ============================ */
-    $stmtTitle = $conn->prepare(
-        "INSERT INTO titles
-         (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, pubdate)
-         VALUES (?, ?, 'Tech', ?, 0, 0, 0, 0, CURDATE())"
-    );
-    $stmtTitle->bind_param("sss", $title_id, $title, $pub_id);
-    $stmtTitle->execute();
-    $stmtTitle->close();
-
-    $insert_success = true;
 }
 
+// ==========================================================
+// 3. AJAX HELPER: ADD OR FIND PUBLISHER (STEP 1)
+// ==========================================================
+if(isset($_GET['ajax_add_publisher'])) {
+    error_reporting(0);
+    header('Content-Type: application/json');
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $p_name = $data['pub_name'];
+
+    // --- A. CHECK IF PUBLISHER EXISTS ---
+    $check_stmt = $conn->prepare("SELECT pub_id FROM publishers WHERE pub_name = ?");
+    $check_stmt->bind_param("s", $p_name);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // --- FOUND: REUSE ID ---
+        $row = $result->fetch_assoc();
+        echo json_encode([
+            "status" => "success", 
+            "pub_id" => $row['pub_id'], 
+            "message" => "Existing publisher found."
+        ]);
+        $check_stmt->close();
+        exit; 
+    }
+    $check_stmt->close();
+
+    // --- B. NOT FOUND: INSERT NEW ---
+    // Generate Publisher ID (e.g., P999)
+    $gen_id = "P" . rand(100, 999);
+    
+    $stmt = $conn->prepare("INSERT INTO publishers (pub_id, pub_name, city, state, country) VALUES (?, ?, ?, ?, ?)");
+    
+    $stmt->bind_param("sssss", 
+        $gen_id, $data['pub_name'], $data['city'], $data['state'], $data['country']
+    );
+
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "pub_id" => $gen_id]);
+    } else {
+        echo json_encode(["status" => "error", "message" => $stmt->error]);
+    }
+    $stmt->close();
+    exit;
+}
 ?>

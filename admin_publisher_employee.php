@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . "/bc_view_pub_emp.php";
+$publisher_search = "";
+$employee_search = "";
 ?>
 
 <!DOCTYPE html>
@@ -9,183 +11,129 @@ require_once __DIR__ . "/bc_view_pub_emp.php";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publishers & Employees | Ink & Solace</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --light-bg: #dbdbdb; 
-            --dark-bg: #20252d;
-            --btn-blue: #3c4862;
-            --btn-grey: #8b8682;
-            --btn-red: #800000; 
+            --dark-bg: #20252d; 
+            --modal-card-bg: #3c4456; 
             --input-bg: #f0f0f0;
+            --btn-confirm: #8b8682;
+            --btn-return: #3c4862;
+            --header-font: 'Cinzel', serif;
+            --body-font: 'Montserrat', sans-serif;
         }
 
         * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: var(--body-font); background-color: var(--light-bg); display: flex; flex-direction: column; }
+        
+        /* HEADER */
+        .top-section { background-color: var(--dark-bg); min-height: 250px; position: relative; display: flex; justify-content: center; align-items: center; }
+        .logo-top { position: absolute; top: 20px; left: 30px; width: 150px; }
+        .page-title-img { width: 500px; max-width: 80%; height: auto; margin-top: 40px; }
+        
+        /* MAIN FORM SECTION */
+        .bottom-section { background-color: var(--light-bg); flex: 1; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        .search-form { width: 100%; max-width: 800px; display: flex; flex-direction: column; } 
+        
+        .input-group { margin-bottom: 30px; } 
 
-        html, body {
-            margin: 0; padding: 0;
-            min-height: 100vh;
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--light-bg);
-            display: flex;
-            flex-direction: column;
+        .input-label { 
+            font-family: var(--header-font); 
+            font-size: 22px; 
+            color: #666; 
+            margin-bottom: 12px; margin-left: 15px; letter-spacing: 1px; text-transform: uppercase;
         }
 
-        /* ================= TOP & BOTTOM LAYOUT ================= */
-        .top-section {
-            background-color: var(--dark-bg);
-            min-height: 200px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 20px;
-        }
-        .logo-top { position: absolute; top: 30px; left: 40px; width: 120px; }
-        .page-title-img { width: 520px; max-width: 80%; height: auto; margin-top: 40px; }
-
-        .bottom-section {
-            background-color: var(--light-bg);
-            flex: 1;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-        }
-
-        /* --- SEARCH FORM --- */
-        .search-form { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 25px; margin-bottom: 30px; }
-        .input-group { display: flex; flex-direction: column; }
-        .input-label { font-family: 'Cinzel', serif; font-size: 24px; color: #555; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; margin-left: 15px; }
         .input-wrapper { position: relative; width: 100%; }
-        .input-wrapper input { width: 100%; padding: 15px 20px 15px 50px; border-radius: 50px; border: none; background-color: var(--input-bg); font-family: 'Montserrat', sans-serif; font-size: 16px; color: #333; outline: none; }
-        .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: none; stroke: #555; stroke-width: 2; }
         
-        .btn-container { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 20px; }
-        .btn { padding: 15px 0; width: 250px; border-radius: 50px; border: none; font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 16px; cursor: pointer; text-align: center; text-decoration: none; transition: transform 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-confirm { background-color: var(--btn-grey); color: white; }
-        .btn-return { background-color: var(--btn-blue); color: white; }
-
-        /* ================= RESULTS MODAL (LEVEL 1) ================= */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000; backdrop-filter: blur(5px); animation: fadeIn 0.3s ease-out;
+        .input-wrapper input { 
+            width: 100%; 
+            padding: 18px 22px 18px 55px; 
+            border-radius: 50px; border: none; 
+            background-color: var(--input-bg); font-family: var(--body-font); 
+            font-size: 18px; 
+            outline: none; color: #333;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
         }
-        .modal-content { display: flex; flex-direction: column; align-items: center; max-width: 90%; max-height: 90vh; position: relative; }
-        .results-heading { color: white; font-family: 'Cinzel', serif; font-size: 36px; letter-spacing: 2px; margin-bottom: 20px; font-weight: 400; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .titles-scroll-container { display: flex; flex-direction: column; align-items: center; gap: 15px; overflow-y: auto; max-height: 60vh; padding: 10px 20px; width: 100%; }
+        .search-icon { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); width: 20px; stroke: #555; fill: none; stroke-width: 2; } 
         
-        .result-pill-btn {
-            background-color: #918a86; color: white; padding: 25px 40px; border-radius: 60px; border: none; cursor: pointer;
-            width: 100%; min-width: 350px; max-width: 550px; text-align: center; transition: transform 0.2s, background-color 0.2s;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .result-pill-btn:hover { transform: scale(1.02); background-color: #a39e9a; }
-        .pill-publisher { font-family: 'Cinzel', serif; font-size: 24px; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; }
-        .pill-employee { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 300; opacity: 0.9; }
-
-        .close-btn { margin-top: 30px; background: transparent; border: 2px solid white; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .close-btn:hover { background: white; color: var(--dark-bg); }
-
-        /* ================= DETAIL CARD (LEVEL 2) ================= */
-        .detail-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center;
-            z-index: 2000; animation: fadeIn 0.3s ease-out;
-        }
-
-        .detail-card {
-            background-color: #3c4456; 
-            width: 500px; max-width: 90%; padding: 40px 30px; border-radius: 15px;
-            text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid #5a647d;
-        }
-
-        .close-detail-x {
-            position: absolute; top: 15px; right: 15px; width: 30px; height: 30px;
-            background: #e0e0e0; color: #333; border-radius: 50%; font-size: 18px; font-weight: bold;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;
-        }
-        .close-detail-x:hover { background: #fff; }
-
-        /* View Mode Text */
-        .card-publisher { font-family: 'Cinzel', serif; color: white; font-size: 30px; margin: 0; margin-bottom: 5px; text-transform: uppercase; }
-        .card-subtext { font-family: 'Montserrat', sans-serif; font-weight: 600; color: white; font-size: 14px; margin-bottom: 30px; }
-        .card-employee-name { font-family: 'Montserrat', sans-serif; font-style: italic; color: white; font-size: 22px; margin-bottom: 40px; font-weight: 300; }
-
-        /* Edit Mode Inputs */
-        .edit-box-border { border: 2px solid white; padding: 20px; margin-bottom: 30px; }
-        .edit-input-pub, .edit-input-name, .edit-input-subtext {
-            background: transparent; border: none; color: white; width: 100%; text-align: center; outline: none; border-bottom: 1px solid rgba(255,255,255,0.3);
-        }
-        .edit-input-pub { font-family: 'Cinzel', serif; font-size: 30px; text-transform: uppercase; margin-bottom: 10px; }
-        .edit-input-subtext { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 30px; }
-        .edit-input-name { font-family: 'Montserrat', sans-serif; font-size: 22px; font-style: italic; margin-top: 10px; }
-
-        .card-actions { display: flex; justify-content: center; gap: 20px; }
-        .action-btn { border: none; padding: 12px 0; width: 140px; border-radius: 30px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; text-transform: uppercase; color: white; }
-        .btn-edit-card { background-color: var(--btn-grey); }
-        .btn-delete-card { background-color: var(--btn-red); }
-
-        /* ================= SUCCESS & DELETE MODALS (LEVEL 3 & 4) ================= */
-        .success-overlay, .delete-overlay {
-            display: none; 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            justify-content: center; align-items: center;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .success-overlay { z-index: 3000; }
-        .delete-overlay { z-index: 4000; }
-        
-        .success-box, .delete-box {
-            background-color: #20252d; 
-            width: 450px; max-width: 90%;
-            padding: 50px 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            border: 1px solid #444;
+        /* BUTTON WRAPPER */
+        .btn-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 30px;
+            gap: 18px;       
+            margin-top: 45px; 
         }
 
-        .success-text, .delete-text {
-            color: white; font-family: 'Cinzel', serif; font-size: 28px; font-weight: 400; margin: 0; line-height: 1.3;
+        .btn { 
+            padding: 18px 0; 
+            width: 310px;    
+            border-radius: 50px; border: none; 
+            font-weight: 600; 
+            font-size: 17px; 
+            cursor: pointer; text-align: center; text-decoration: none; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-family: var(--body-font); 
         }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-confirm { background-color: var(--btn-confirm); color: white; }
+        .btn-return { background-color: var(--btn-return); color: white; }
 
-        .btn-done {
-            background-color: #f0f0f0; color: #20252d; border: none; padding: 12px 60px; border-radius: 30px;
-            font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; text-transform: uppercase; transition: transform 0.2s;
+        /* MODAL OVERLAY */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); 
+            display: flex; justify-content: center; align-items: center; z-index: 1000; 
         }
-        .btn-done:hover { transform: scale(1.05); background-color: white; }
-
-        .delete-btn-container { display: flex; gap: 20px; }
-        .btn-yes {
-            background-color: var(--btn-grey); color: white; border: none; padding: 12px 40px; border-radius: 30px;
-            font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; text-transform: uppercase;
-        }
-        .btn-cancel {
-            background-color: var(--btn-red); color: white; border: none; padding: 12px 40px; border-radius: 30px;
-            font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; text-transform: uppercase;
-        }
-        .btn-yes:hover, .btn-cancel:hover { filter: brightness(1.2); }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        @media (max-width: 768px) {
-            .detail-card { width: 90%; padding: 30px 20px; }
-            .card-actions { flex-direction: column; width: 100%; }
-            .action-btn { width: 100%; }
+        /* RESULTS LIST STYLES */
+        .results-container { display: flex; flex-direction: column; align-items: center; }
+        .modal-header { font-family: var(--header-font); color: white; font-size: 38px; margin-bottom: 25px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 2px; }
+        .results-scroll-container { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 10px; }
+        .result-pill { background-color: #918a86; color: white; padding: 15px 30px; width: 380px; border-radius: 50px; border: none; cursor: pointer; text-align: center; transition: 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .result-pill:hover { transform: scale(1.02); background-color: #a39c98; }
+        .res-main { font-family: var(--header-font); font-size: 16px; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .res-sub { font-family: var(--body-font); font-size: 13px; font-weight: 300; }
+
+        /* NO DATA MODAL */
+        .no-data-card {
+            background-color: var(--dark-bg); 
+            width: 550px; padding: 60px 40px; border-radius: 15px;
+            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            position: relative; display: flex; flex-direction: column; align-items: center; gap: 25px;
         }
+        .no-data-text { 
+            font-family: var(--header-font); color: white; font-size: 26px; 
+            font-weight: 400; line-height: 1.4; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .btn-ok { 
+            background-color: white; color: #20252d; border: none; 
+            padding: 12px 70px; border-radius: 30px; 
+            font-family: var(--body-font); font-weight: 700; font-size: 14px; 
+            cursor: pointer; text-transform: uppercase; margin-top: 10px;
+            transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .btn-ok:hover { transform: scale(1.05); background-color: #f2f2f2; }
+
+        /* DETAILED VIEW MODAL STYLES */
+        .detail-card { background-color: var(--modal-card-bg); width: 1200px; max-width: 95vw; max-height: 90vh; padding: 30px 40px; border-radius: 10px; position: relative; overflow-y: auto; border: 1px solid #555; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .close-x { position: absolute; top: 15px; right: 15px; background: transparent; border: 2px solid white; color: white; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-family: var(--body-font); }
+        .close-x:hover { background: white; color: var(--modal-card-bg); }
+        .section-header { font-family: var(--header-font); color: white; font-size: 22px; margin-bottom: 15px; margin-top: 25px; border-bottom: 1px solid #777; padding-bottom: 8px; letter-spacing: 1px; }
+        .section-header:first-of-type { margin-top: 0; }
+        .table-wrapper { width: 100%; overflow-x: auto; margin-bottom: 20px; background: white; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { padding: 12px 15px; text-align: center; font-size: 14px; border: 1px solid #ccc; color: #333; font-family: var(--body-font); }
+        th { background-color: #f0f0f0; font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+        td { font-weight: 400; }
+        .btn-back-center { display: block; margin: 30px auto 0 auto; background-color: #666; color: white; padding: 12px 50px; border-radius: 30px; border: none; font-family: var(--body-font); font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-back-center:hover { background-color: #888; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 
@@ -197,176 +145,111 @@ require_once __DIR__ . "/bc_view_pub_emp.php";
 </div>
 
 <div class="bottom-section">
-    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="search-form">
+    <form method="POST" class="search-form">
         <div class="input-group">
-            <label class="input-label">Publisher</label>
+            <label class="input-label">Publisher Search</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="publisher" placeholder="SEARCH" value="<?php echo htmlspecialchars($publisher_input); ?>">
+                <input type="text" name="publisher_search" placeholder="Search by Publisher Name" value="<?php echo htmlspecialchars($publisher_search); ?>">
             </div>
         </div>
         <div class="input-group">
-            <label class="input-label">Employee</label>
+            <label class="input-label">Employee Search</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="employee" placeholder="SEARCH" value="<?php echo htmlspecialchars($employee_input); ?>">
+                <input type="text" name="employee_search" placeholder="Search by Employee Name" value="<?php echo htmlspecialchars($employee_search); ?>">
             </div>
         </div>
-        <div class="btn-container">
-            <button type="submit" class="btn btn-confirm">Confirm</button>
+        
+        <div class="btn-wrapper">
+            <button type="submit" class="btn btn-confirm">Search</button>
             <a href="admin_view_database.php" class="btn btn-return">Return to Main Menu</a>
         </div>
     </form>
 </div>
 
-<?php if ($show_results_modal): ?>
-    <div class="modal-overlay" id="resultsModal">
-        <div class="modal-content">
-            <h2 class="results-heading">RESULTS:</h2>
-            <div class="titles-scroll-container">
-                <?php foreach($found_employees as $emp): 
-                    // Extract Variables from the SQL Result Array
-                    $name = $emp['name'];
-                    $job = $emp['job'];
-                    $publisher_name = $emp['publisher']; 
+<?php if ($has_results): ?>
+    <div class="modal-overlay" id="listModal">
+        <div class="results-container">
+            <div class="modal-header">RESULTS</div>
+            <div class="results-scroll-container">
+                <?php foreach($results_list as $row): 
+                    $jsonData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
                 ?>
-                    <button class="result-pill-btn" type="button" 
-                        onclick="openDetailCard('<?php echo addslashes($publisher_name); ?>', '<?php echo addslashes($name); ?>', '<?php echo addslashes($job); ?>')">
-                        <span class="pill-publisher"><?php echo htmlspecialchars($publisher_name); ?></span>
-                        <span class="pill-employee"><?php echo htmlspecialchars($name); ?></span>
+                    <button class="result-pill" type="button" onclick='openDetails(<?php echo $jsonData; ?>)'>
+                        <span class="res-main"><?php echo htmlspecialchars($row['pub_name'] ?? 'Untitled'); ?></span>
+                        <span class="res-sub">Emp: <?php echo htmlspecialchars(($row['fname'] ?? '') . " " . ($row['lname'] ?? '')); ?></span>
                     </button>
                 <?php endforeach; ?>
-                
-                <?php if (count($found_employees) == 0): ?>
-                    <p style="color:white; font-family:'Montserrat', sans-serif;">No matching results found.</p>
-                <?php endif; ?>
             </div>
-            <button class="close-btn" onclick="document.getElementById('resultsModal').style.display='none'">
-                &times;
-            </button>
+            <button class="close-x" style="position:relative; margin-top:20px; right:auto;" onclick="location.href='admin_publisher_employee.php'">✕</button>
         </div>
     </div>
+
+    <div class="modal-overlay hidden" id="detailModal">
+        <div class="detail-card">
+            <button class="close-x" onclick="closeDetails()">✕</button>
+            
+            <div class="section-header">PUBLISHER INFORMATION</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Pub_ID</th><th>Publisher Name</th><th>City</th><th>State</th><th>Country</th></tr></thead>
+                    <tbody><tr>
+                        <td id="v_pub_id"></td><td id="v_pub_name"></td><td id="v_city"></td><td id="v_state"></td><td id="v_country"></td>
+                    </tr></tbody>
+                </table>
+            </div>
+
+            <div class="section-header">EMPLOYEE INFORMATION</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Emp_ID</th><th>First Name</th><th>M.I.</th><th>Last Name</th><th>Job_ID</th><th>Job Level</th><th>Hire Date</th></tr></thead>
+                    <tbody><tr>
+                        <td id="v_emp_id"></td><td id="v_fname"></td><td id="v_minit"></td><td id="v_lname"></td><td id="v_job_id"></td><td id="v_job_lvl"></td><td id="v_hire_date"></td>
+                    </tr></tbody>
+                </table>
+            </div>
+
+            <button class="btn-back-center" onclick="closeDetails()">BACK</button>
+        </div>
+    </div>
+
+    <script>
+        function openDetails(data) {
+            document.getElementById('listModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('hidden');
+
+            const map = {
+                'v_pub_id': data.pub_id, 'v_pub_name': data.pub_name, 'v_city': data.city, 
+                'v_state': data.state, 'v_country': data.country,
+                'v_emp_id': data.emp_id, 'v_fname': data.fname, 'v_minit': data.minit, 
+                'v_lname': data.lname, 'v_job_id': data.job_id,
+                'v_job_lvl': data.job_lvl, 'v_hire_date': data.hire_date
+            };
+            for(let id in map) document.getElementById(id).innerText = map[id] || '';
+        }
+
+        function closeDetails() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('listModal').classList.remove('hidden');
+        }
+    </script>
 <?php endif; ?>
 
-<div class="detail-overlay" id="detailModal">
-    <div class="detail-card">
-        <div class="close-detail-x" onclick="closeDetailCard()">✕</div>
+<?php if ($show_no_data_modal): ?>
+<div class="modal-overlay">
+    <div class="no-data-card">
+        <button class="close-x" onclick="location.href='view_publisher_employee.php'">✕</button>
         
-        <div id="viewModeWrapper">
-            <h2 class="card-publisher" id="detailPubName">PUBLISHER</h2>
-            <p class="card-subtext" id="detailJobTitle">Job Title</p> 
-            <p class="card-employee-name" id="detailEmpName">Employee Name</p>
-            
-            <div class="card-actions">
-                <button class="action-btn btn-edit-card" onclick="enableEditMode()">EDIT</button>
-                <button class="action-btn btn-delete-card" onclick="askDeleteConfirmation()">DELETE</button>
-            </div>
+        <div class="no-data-text">
+            NO RECORDS FOUND<br>
+            MATCHING YOUR SEARCH.
         </div>
-
-        <div id="editModeWrapper" style="display: none;">
-            <div class="edit-box-border">
-                <input type="text" id="editPubInput" class="edit-input-pub">
-                <input type="text" id="editJobInput" class="edit-input-subtext">
-                <input type="text" id="editNameInput" class="edit-input-name">
-            </div>
-            
-            <div class="card-actions">
-                <button class="action-btn btn-edit-card" onclick="saveChanges()">SAVE</button>
-                <button class="action-btn btn-delete-card" onclick="cancelEditMode()">CANCEL</button>
-            </div>
-        </div>
+        
+        <button class="btn-ok" onclick="location.href='admin_publisher_employee.php'">OK</button>
     </div>
 </div>
-
-<div class="delete-overlay" id="deleteConfirmModal">
-    <div class="delete-box">
-        <h2 class="delete-text">Are you sure you want to delete this?</h2>
-        <div class="delete-btn-container">
-            <button class="btn-yes" onclick="confirmDelete()">YES</button>
-            <button class="btn-cancel" onclick="closeDeleteConfirmation()">CANCEL</button>
-        </div>
-    </div>
-</div>
-
-<div class="success-overlay" id="successModal">
-    <div class="success-box">
-        <h2 class="success-text" id="successMessageText">Entry successfully edited.</h2>
-        <button class="btn-done" onclick="closeSuccessModal()">DONE</button>
-    </div>
-</div>
-
-<script>
-    // 1. OPEN MODAL
-    function openDetailCard(publisher, empName, jobTitle) {
-        cancelEditMode(); 
-        
-        document.getElementById('detailPubName').innerText = publisher;
-        document.getElementById('detailEmpName').innerText = empName;
-        document.getElementById('detailJobTitle').innerText = jobTitle; 
-        
-        document.getElementById('detailModal').style.display = 'flex';
-    }
-
-    // 2. CLOSE MODAL
-    function closeDetailCard() {
-        document.getElementById('detailModal').style.display = 'none';
-    }
-
-    // 3. ENABLE EDIT MODE
-    function enableEditMode() {
-        var currentPub = document.getElementById('detailPubName').innerText;
-        var currentJob = document.getElementById('detailJobTitle').innerText;
-        var currentName = document.getElementById('detailEmpName').innerText;
-
-        document.getElementById('editPubInput').value = currentPub;
-        document.getElementById('editJobInput').value = currentJob;
-        document.getElementById('editNameInput').value = currentName;
-
-        document.getElementById('viewModeWrapper').style.display = 'none';
-        document.getElementById('editModeWrapper').style.display = 'block';
-    }
-
-    // 4. CANCEL EDIT MODE
-    function cancelEditMode() {
-        document.getElementById('editModeWrapper').style.display = 'none';
-        document.getElementById('viewModeWrapper').style.display = 'block';
-    }
-
-    // 5. SAVE CHANGES (UI Simulation Only)
-    function saveChanges() {
-        document.getElementById('detailPubName').innerText = document.getElementById('editPubInput').value;
-        document.getElementById('detailJobTitle').innerText = document.getElementById('editJobInput').value;
-        document.getElementById('detailEmpName').innerText = document.getElementById('editNameInput').value;
-
-        cancelEditMode();
-        
-        // Note: To make this persist in the database, you would need an AJAX call here
-        document.getElementById('successMessageText').innerText = "Entry successfully edited.";
-        document.getElementById('successModal').style.display = 'flex';
-    }
-
-    // 6. DELETE LOGIC (UI Simulation Only)
-    function askDeleteConfirmation() {
-        document.getElementById('deleteConfirmModal').style.display = 'flex';
-    }
-
-    function closeDeleteConfirmation() {
-        document.getElementById('deleteConfirmModal').style.display = 'none';
-    }
-
-    function confirmDelete() {
-        closeDeleteConfirmation();
-        closeDetailCard();
-        // Note: To make this persist in the database, you would need an AJAX call here
-        document.getElementById('successMessageText').innerText = "Entry successfully deleted.";
-        document.getElementById('successModal').style.display = 'flex';
-    }
-
-    // 7. CLOSE SUCCESS MODAL
-    function closeSuccessModal() {
-        document.getElementById('successModal').style.display = 'none';
-    }
-</script>
+<?php endif; ?>
 
 </body>
 </html>

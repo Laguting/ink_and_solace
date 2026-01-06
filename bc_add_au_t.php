@@ -5,85 +5,56 @@ $show_modal = false;
 $success_message = "";
 
 // ==========================================================
-// 1. ADD TITLE (NO DUPLICATES)
+// 1. ADD EMPLOYEE (STEP 2 FORM SUBMIT)
 // ==========================================================
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === 'add_title') {
+if ($_SERVER["REQUEST_METHOD"] === "POST"
+    && isset($_POST['action'])
+    && $_POST['action'] === 'add_employee'
+) {
 
     $conn->begin_transaction();
 
     try {
         /* ------------------------------------------------------
-           A. CHECK DUPLICATE TITLE
+           A. GENERATE emp_id (SEQUENTIAL)
         ------------------------------------------------------ */
-        $chkTitle = $conn->prepare("SELECT title_id FROM titles WHERE title = ?");
-        $chkTitle->bind_param("s", $_POST['title']);
-        $chkTitle->execute();
-        $res = $chkTitle->get_result();
-
-        if ($res->num_rows > 0) {
-            throw new Exception("Duplicate title already exists.");
-        }
-        $chkTitle->close();
-
-        /* ------------------------------------------------------
-           B. GENERATE title_id (SEQUENTIAL, SAFE)
-        ------------------------------------------------------ */
-        $res = $conn->query("SELECT title_id FROM titles ORDER BY title_id DESC LIMIT 1");
+        $res = $conn->query("SELECT emp_id FROM employees ORDER BY emp_id DESC LIMIT 1");
         if ($row = $res->fetch_assoc()) {
-            $num = intval(substr($row['title_id'], 1)) + 1;
+            $num = intval(substr($row['emp_id'], 1)) + 1;
         } else {
             $num = 1;
         }
-        $title_id = "T" . str_pad($num, 3, "0", STR_PAD_LEFT);
+        $emp_id = "E" . str_pad($num, 3, "0", STR_PAD_LEFT);
 
         /* ------------------------------------------------------
-           C. INSERT TITLE
+           B. INSERT EMPLOYEE
         ------------------------------------------------------ */
         $stmt = $conn->prepare("
-            INSERT INTO titles
-            (title_id, title, type, pub_id, price, advance, royalty, ytd_sales, notes, pubdate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO employees
+            (emp_id, fname, minit, lname, job_id, job_lvl, pub_id, hire_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
+        $job_id = 1; // default job
+
         $stmt->bind_param(
-            "sssdiiisss",
-            $title_id,
-            $_POST['title'],
-            $_POST['type'],
+            "ssssiiss",
+            $emp_id,
+            $_POST['fname'],
+            $_POST['minit'],
+            $_POST['lname'],
+            $job_id,
+            $_POST['job_lvl'],
             $_POST['pub_id'],
-            $_POST['price'],
-            $_POST['advance'],
-            $_POST['royalty'],
-            $_POST['ytd_sales'],
-            $_POST['notes'],
-            $_POST['pubdate']
+            $_POST['hire_date']
         );
+
         $stmt->execute();
         $stmt->close();
 
-        /* ------------------------------------------------------
-           D. LINK AUTHOR & TITLE (NO DUPLICATES)
-        ------------------------------------------------------ */
-        $chkLink = $conn->prepare("
-            SELECT 1 FROM titleauthor WHERE au_id = ? AND title_id = ?
-        ");
-        $chkLink->bind_param("ss", $_POST['au_id'], $title_id);
-        $chkLink->execute();
-        if ($chkLink->get_result()->num_rows === 0) {
-
-            $link = $conn->prepare("
-                INSERT INTO titleauthor (au_id, title_id)
-                VALUES (?, ?)
-            ");
-            $link->bind_param("ss", $_POST['au_id'], $title_id);
-            $link->execute();
-            $link->close();
-        }
-        $chkLink->close();
-
         $conn->commit();
         $show_modal = true;
-        $success_message = "Complete entry successfully added.";
+        $success_message = "Publisher and Employee successfully added.";
 
     } catch (Exception $e) {
         $conn->rollback();
@@ -92,24 +63,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
 }
 
 // ==========================================================
-// 2. AJAX — ADD OR FIND AUTHOR (NO DUPLICATES)
+// 2. AJAX — ADD OR FIND PUBLISHER (NO DUPLICATES)
 // ==========================================================
-if (isset($_GET['ajax_add_author'])) {
+if (isset($_GET['ajax_add_publisher'])) {
 
     header("Content-Type: application/json");
     $data = json_decode(file_get_contents("php://input"), true);
+    if (!$data) exit;
 
-    $fname = trim($data['au_fname']);
-    $lname = trim($data['au_lname']);
+    $pub_name = trim($data['pub_name']);
 
     /* ------------------------------------------------------
-       A. CHECK EXISTING AUTHOR
+       A. CHECK EXISTING PUBLISHER
     ------------------------------------------------------ */
     $chk = $conn->prepare("
-        SELECT au_id FROM authors
-        WHERE au_fname = ? AND au_lname = ?
+        SELECT pub_id FROM publishers
+        WHERE pub_name = ?
     ");
-    $chk->bind_param("ss", $fname, $lname);
+    $chk->bind_param("s", $pub_name);
     $chk->execute();
     $res = $chk->get_result();
 
@@ -117,50 +88,52 @@ if (isset($_GET['ajax_add_author'])) {
         $row = $res->fetch_assoc();
         echo json_encode([
             "status" => "success",
-            "au_id"  => $row['au_id'],
-            "message"=> "Existing author reused."
+            "pub_id" => $row['pub_id'],
+            "message"=> "Existing publisher reused."
         ]);
         exit;
     }
     $chk->close();
 
     /* ------------------------------------------------------
-       B. GENERATE au_id (SEQUENTIAL)
+       B. GENERATE pub_id (SEQUENTIAL)
     ------------------------------------------------------ */
-    $res = $conn->query("SELECT au_id FROM authors ORDER BY au_id DESC LIMIT 1");
+    $res = $conn->query("SELECT pub_id FROM publishers ORDER BY pub_id DESC LIMIT 1");
     if ($row = $res->fetch_assoc()) {
-        $num = intval(substr($row['au_id'], 1)) + 1;
+        $num = intval($row['pub_id']) + 1;
     } else {
-        $num = 1;
+        $num = 1000;
     }
-    $au_id = "A" . str_pad($num, 3, "0", STR_PAD_LEFT);
+    $pub_id = (string)$num;
 
     /* ------------------------------------------------------
-       C. INSERT AUTHOR
+       C. INSERT PUBLISHER
     ------------------------------------------------------ */
     $stmt = $conn->prepare("
-        INSERT INTO authors
-        (au_id, au_lname, au_fname, phone, address, city, state, zip, contract)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO publishers
+        (pub_id, pub_name, city, state, country)
+        VALUES (?, ?, ?, ?, ?)
     ");
 
     $stmt->bind_param(
-        "sssssssis",
-        $au_id,
-        $lname,
-        $fname,
-        $data['phone'] ?? null,
-        $data['address'] ?? null,
-        $data['city'] ?? null,
-        $data['state'] ?? null,
-        $data['zip'] ?? null,
-        $data['contract'] ?? 0
+        "sssss",
+        $pub_id,
+        $pub_name,
+        $data['city'],
+        $data['state'],
+        $data['country']
     );
 
     if ($stmt->execute()) {
-        echo json_encode(["status" => "success", "au_id" => $au_id]);
+        echo json_encode([
+            "status" => "success",
+            "pub_id" => $pub_id
+        ]);
     } else {
-        echo json_encode(["status" => "error", "message" => $stmt->error]);
+        echo json_encode([
+            "status" => "error",
+            "message" => $stmt->error
+        ]);
     }
     exit;
 }

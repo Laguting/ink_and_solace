@@ -1,89 +1,66 @@
 <?php
 require_once __DIR__ . "/bc_db_connect.php";
 
-$publisher_input = trim($_POST['publisher'] ?? "");
-$employee_input  = trim($_POST['employee'] ?? "");
+// Initialize variables to prevent "Undefined Variable" errors in the HTML
+$has_results = false;
+$show_no_data_modal = false;
+$results_list = [];
+$publisher_search = "";
+$employee_search = "";
 
-$found_employees = [];
-$show_results_modal = false;
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    // 1. Capture and trim search inputs
+    // Note: These names match the corrected 'name' attributes in the HTML form
+    $publisher_search = trim($_POST['publisher_search'] ?? "");
+    $employee_search = trim($_POST['employee_search'] ?? "");
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    $conditions = [];
-    $params = [];
-    $types = "";
-
-    /* =========================
-       Publisher filter
-       ========================= */
-    if ($publisher_input !== "") {
-        $conditions[] = "p.pub_name LIKE ?";
-        $params[] = "%{$publisher_input}%";
-        $types .= "s";
+    // 2. Only proceed if at least one search field is filled
+    if (!empty($publisher_search) || !empty($employee_search)) {
+        
+        /**
+         * SQL EXPLANATION:
+         * We use LEFT JOIN so that Publishers appear even if they have no 
+         * matching records in the Employees table. 
+         * We search pub_name, fname, and lname using LIKE.
+         */
+        $sql = "SELECT 
+                    p.pub_id, p.pub_name, p.city, p.state, p.country,
+                    e.emp_id, e.fname, e.minit, e.lname, e.job_id, e.job_lvl, e.hire_date
+                FROM publishers p 
+                LEFT JOIN employee e ON p.pub_id = e.pub_id 
+                WHERE p.pub_name LIKE ? 
+                   OR e.fname LIKE ? 
+                   OR e.lname LIKE ?";
+        
+        $stmt = $conn->prepare($sql);
+        
+        // Prepare search terms with wildcards
+        $term_p = "%" . $publisher_search . "%";
+        $term_e = "%" . $employee_search . "%";
+        
+        // Bind parameters: 
+        // 1st ? = Publisher Name
+        // 2nd ? = Employee First Name
+        // 3rd ? = Employee Last Name
+        $stmt->bind_param("sss", $term_p, $term_e, $term_e); 
+        
+        if ($stmt->execute()) {
+            $res = $stmt->get_result();
+            
+            if ($res->num_rows > 0) {
+                $has_results = true;
+                while ($row = $res->fetch_assoc()) {
+                    $results_list[] = $row;
+                }
+            } else {
+                $show_no_data_modal = true;
+            }
+        } else {
+            // Log database errors for debugging
+            error_log("Database Error: " . $conn->error);
+        }
+        $stmt->close();
     }
-
-    /* =========================
-       Employee name filter
-       (fname, lname, FULL NAME)
-       ========================= */
-    if ($employee_input !== "") {
-        $conditions[] = "
-            CONCAT(e.fname, ' ', e.lname) LIKE ?
-            OR e.fname LIKE ?
-            OR e.lname LIKE ?
-        ";
-        $params[] = "%{$employee_input}%";
-        $params[] = "%{$employee_input}%";
-        $params[] = "%{$employee_input}%";
-        $types .= "sss";
-    }
-
-    /* =========================
-       Base SQL
-       ========================= */
-    $sql = "
-        SELECT 
-            e.emp_id,
-            e.fname,
-            e.lname,
-            j.job_desc,
-            p.pub_id,
-            p.pub_name
-        FROM employee e
-        INNER JOIN publishers p ON e.pub_id = p.pub_id
-        LEFT JOIN jobs j ON e.job_id = j.job_id
-    ";
-
-    /* =========================
-       Apply filters
-       ========================= */
-    if (!empty($conditions)) {
-        $sql .= " WHERE (" . implode(" OR ", $conditions) . ")";
-    }
-
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        die("SQL Prepare Error: " . $conn->error);
-    }
-
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $found_employees[] = [
-            "emp_id"    => $row['emp_id'],
-            "pub_id"    => $row['pub_id'],
-            "publisher" => $row['pub_name'],
-            "name"      => $row['fname'] . " " . $row['lname'],
-            "job"       => $row['job_desc'] ?? "N/A"
-        ];
-    }
-
-    $stmt->close();
-    $show_results_modal = true;
 }
 ?>

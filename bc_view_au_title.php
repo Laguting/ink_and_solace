@@ -1,86 +1,124 @@
 <?php
 // bc_view_au_title.php
-require_once __DIR__ . "/bc_db_connect.php"; // Make sure this connects to the correct DB
+require_once __DIR__ . "/bc_db_connect.php"; 
 
-$pub_search = "";
-$title_search = "";
+// 1. Initialize variables so they exist for the HTML file
+$author_search = "";
+$title_search  = "";
 $has_results = false;
-$no_results = false;
+$show_no_data_modal = false;
 $results_list = [];
 
-// ==========================================================
-// 2. HANDLE ACTIONS
-// ==========================================================
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     
-    // --- UPDATE ACTION ---
-    if (isset($_POST['action']) && $_POST['action'] == 'update') {
-        $sql_pub = "UPDATE publishers SET pub_name=?, city=?, state=?, country=? WHERE pub_id=?";
-        $stmt1 = $conn->prepare($sql_pub);
-        $stmt1->bind_param("sssss", $_POST['pub_name'], $_POST['city'], $_POST['state'], $_POST['country'], $_POST['pub_id']);
-        $p_upd = $stmt1->execute();
+    // --- UPDATE LOGIC (Updates 2 Tables) ---
+    if ($_POST['action'] == 'update') {
+        // 1. Update AUTHOR Table
+        // Removed au_minit as it does not exist in your database schema
+        $sql_author = "UPDATE authors SET 
+                        au_lname=?, au_fname=?, phone=?, address=?, city=?, state=?, zip=?, contract=? 
+                        WHERE au_id=?";
+        $stmt1 = $conn->prepare($sql_author);
+        
+        // Type string: sssssssis (7 strings, 1 integer for contract, 1 string for au_id)
+        $stmt1->bind_param("sssssssis", 
+            $_POST['au_lname'], $_POST['au_fname'], $_POST['phone'], 
+            $_POST['address'], $_POST['city'], $_POST['state'], $_POST['zip'], $_POST['contract'], 
+            $_POST['au_id']
+        );
+        $author_updated = $stmt1->execute();
         $stmt1->close();
 
-        $sql_title = "UPDATE titles SET title=?, type=?, price=?, advance=?, royalty=?, ytd_sales=?, notes=?, pubdate=? WHERE title_id=?";
+        // 2. Update TITLE Table
+        $sql_title = "UPDATE titles SET 
+                      title=?, type=?, pub_id=?, price=?, advance=?, royalty=?, ytd_sales=?, notes=?, pubdate=? 
+                      WHERE title_id=?";
         $stmt2 = $conn->prepare($sql_title);
-        $stmt2->bind_param("ssddiiiss", $_POST['title'], $_POST['type'], $_POST['price'], $_POST['advance'], $_POST['royalty'], $_POST['ytd_sales'], $_POST['notes'], $_POST['pubdate'], $_POST['title_id']);
-        $t_upd = $stmt2->execute();
+
+        // FIXED: Changed bind_param types to ensure 'notes' (8th param) is a string 's'
+        // Type string: sssddiisss
+        // title(s), type(s), pub_id(s), price(d), advance(d), royalty(i), ytd_sales(i), notes(s), pubdate(s), title_id(s)
+        $stmt2->bind_param("sssddiisss", 
+            $_POST['title'], 
+            $_POST['type'], 
+            $_POST['pub_id'], 
+            $_POST['price'], 
+            $_POST['advance'], 
+            $_POST['royalty'], 
+            $_POST['ytd_sales'], 
+            $_POST['notes'], 
+            $_POST['pubdate'], 
+            $_POST['title_id']
+        );
+        $title_updated = $stmt2->execute();
         $stmt2->close();
 
-        echo json_encode(["status" => ($p_upd && $t_upd) ? "success" : "error", "message" => "ENTRY SUCCESSFULLY EDITED."]);
+        if ($author_updated && $title_updated) { 
+            echo json_encode(["status" => "success"]); 
+        } else { 
+            echo json_encode(["status" => "error", "message" => $conn->error]); 
+        }
         exit;
     }
 
-    // --- DELETE ACTION ---
-    if (isset($_POST['action']) && $_POST['action'] == 'delete') {
-        $stmt = $conn->prepare("DELETE FROM titles WHERE title_id = ?");
-        $stmt->bind_param("s", $_POST['title_id']);
-        $success = $stmt->execute();
-        $stmt->close();
+    // --- DELETE LOGIC ---
+    if ($_POST['action'] == 'delete') {
+        $stmt = $conn->prepare("DELETE FROM authors WHERE au_id=?");
+        $stmt->bind_param("s", $_POST['au_id']);
         
-        echo json_encode(["status" => $success ? "success" : "error", "message" => "ENTRY SUCCESSFULLY DELETED."]);
-        exit;
+        if ($stmt->execute()) { echo json_encode(["status" => "success"]); } 
+        else { echo json_encode(["status" => "error", "message" => $stmt->error]); }
+        $stmt->close(); exit;
     }
+}
 
-    // --- SEARCH LOGIC ---
-    if (isset($_POST['pub_search']) || isset($_POST['title_search'])) {
-        $pub_search = trim($_POST['pub_search'] ?? "");
-        $title_search = trim($_POST['title_search'] ?? "");
+// ==========================================================
+// 3. SEARCH LOGIC (JOIN via titleauthor bridge table)
+// ==========================================================
+$author_search = "";
+$title_search = "";
+$has_results = false;
+$show_no_data_modal = false;
+$results_list = [];
 
-        $conditions = [];
-        $params = [];
-        $types = "";
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) {
+    $author_search = trim($_POST['author_search'] ?? "");
+    $title_search = trim($_POST['title_search'] ?? "");
+    
+    if(!empty($author_search) || !empty($title_search)){
+        // Join via the junction table since au_id is not in titles
+        $sql = "SELECT t.*, a.* FROM titles t 
+                JOIN titleauthor ta ON t.title_id = ta.title_id 
+                JOIN authors a ON ta.au_id = a.au_id 
+                WHERE (
+                    a.au_lname LIKE ? 
+                    OR a.au_fname LIKE ? 
+                    OR CONCAT(a.au_fname, ' ', a.au_lname) LIKE ?
+                ) OR t.title LIKE ?";
+        
+        $stmt = $conn->prepare($sql);
+        $term_a = "%" . $author_search . "%";
+        $term_t = "%" . $title_search . "%";
+        
+        $param_a = empty($author_search) ? "NO_MATCH_XYZ" : $term_a;
+        $param_t = empty($title_search) ? "NO_MATCH_XYZ" : $term_t;
+        if(empty($author_search)) $param_a = $param_t; 
+        if(empty($title_search)) $param_t = $param_a;
 
-        $query = "SELECT t.*, p.pub_name, p.city, p.state, p.country 
-                  FROM titles t 
-                  LEFT JOIN publishers p ON t.pub_id = p.pub_id";
-
-        if (!empty($pub_search)) {
-            $conditions[] = "p.pub_name LIKE ?";
-            $params[] = "%$pub_search%";
-            $types .= "s";
-        }
-        if (!empty($title_search)) {
-            $conditions[] = "t.title LIKE ?";
-            $params[] = "%$title_search%";
-            $types .= "s";
-        }
-
-        if (count($conditions) > 0) {
-            $query .= " WHERE " . implode(" AND ", $conditions);
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param($types, ...$params);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            
-            if ($res->num_rows > 0) {
-                $has_results = true;
-                while($row = $res->fetch_assoc()) { $results_list[] = $row; }
-            } else {
-                $no_results = true;
+        $stmt->bind_param("ssss", $param_a, $param_a, $param_a, $param_t);
+        
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        if ($res->num_rows > 0) {
+            $has_results = true;
+            while($row = $res->fetch_assoc()) {
+                $results_list[] = $row;
             }
-            $stmt->close();
+        } else {
+            $show_no_data_modal = true;
         }
+        $stmt->close();
     }
 }
 ?>

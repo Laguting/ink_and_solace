@@ -1,10 +1,4 @@
-<?php
-/**
- * Edit Database Page | Ink & Solace
- * * This file is now a PHP script. You can now add server-side logic 
- * above the HTML or inside the body using <?php ?> tags.
- */
-?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -173,11 +167,7 @@
             box-sizing: border-box;
         }
 
-        .report-item {
-            width: 100%;
-            max-width: 1100px;
-            margin-top: 10px;
-        }
+        /* Removed .report-item CSS */
 
         .img-option-text {
             max-height: 70%;
@@ -257,20 +247,8 @@
                 </a>
             </div>
         </div>
-
-        <div class="report-item">
-            <div class="option-item">
-                <a href="add_report.php" class="option-box">
-                    <img src="assets/text/text-opt-report.png" alt="REPORT" class="img-option-text">
-                </a>
-                <a href="add_report.php" class="proceed-link">
-                    PROCEED <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 6L22 6M22 6L17 1M22 6L17 11"></path></svg>
-                </a>
-            </div>
+        
         </div>
-    </div>
 
 </body>
-
 </html>
-

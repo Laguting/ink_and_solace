@@ -1,118 +1,152 @@
 <?php
-require_once __DIR__ . "/bc_db_connect.php";
+require_once "bc_db_connect.php";
 
-// Initialize variables
-$publisher_search = "";
-$employee_search  = "";
-$insert_success   = false;
+$show_modal = false;
+$success_message = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $publisher_search = trim($_POST['publisher'] ?? "");
-    $employee_search  = trim($_POST['employee'] ?? "");
-
-    if (!empty($publisher_search) && !empty($employee_search)) {
-
-        /* ================================
-           1. GET OR CREATE PUBLISHER
-           ================================ */
-        $stmtPub = $conn->prepare(
-            "SELECT pub_id FROM publishers WHERE pub_name = ?"
-        );
-        $stmtPub->bind_param("s", $publisher_search);
-        $stmtPub->execute();
-        $pubResult = $stmtPub->get_result();
-
-        if ($pubResult->num_rows === 1) {
-            $pubRow = $pubResult->fetch_assoc();
-            $pub_id = $pubRow['pub_id'];
-        } else {
-
-            /* ================================
-               GENERATE SEQUENTIAL pub_id
-               ================================ */
-            $resultPub = $conn->query("
-                SELECT MAX(CAST(SUBSTRING(pub_id, 2) AS UNSIGNED)) AS max_id
-                FROM publishers
-            ");
-            $rowPub = $resultPub->fetch_assoc();
-            $nextPubNum = ($rowPub['max_id'] ?? 0) + 1;
-            $pub_id = 'P' . str_pad($nextPubNum, 3, '0', STR_PAD_LEFT);
-
-            $stmtInsertPub = $conn->prepare(
-                "INSERT INTO publishers (pub_id, pub_name)
-                 VALUES (?, ?)"
-            );
-            $stmtInsertPub->bind_param("ss", $pub_id, $publisher_search);
-            $stmtInsertPub->execute();
-            $stmtInsertPub->close();
-        }
-        $stmtPub->close();
-
-        /* ================================
-           2. GET OR CREATE EMPLOYEE
-           ================================ */
-        $nameParts = explode(" ", $employee_search, 2);
-
-        if (count($nameParts) === 2) {
-            [$fname, $lname] = $nameParts;
-
-            $stmtEmp = $conn->prepare(
-                "SELECT emp_id FROM employee WHERE fname = ? AND lname = ?"
-            );
-            $stmtEmp->bind_param("ss", $fname, $lname);
-            $stmtEmp->execute();
-            $empResult = $stmtEmp->get_result();
-
-            if ($empResult->num_rows === 1) {
-                $empRow = $empResult->fetch_assoc();
-                $emp_id = $empRow['emp_id'];
-            } else {
-
-                /* ================================
-                   GENERATE SEQUENTIAL emp_id
-                   ================================ */
-                $resultEmp = $conn->query("
-                    SELECT MAX(CAST(SUBSTRING(emp_id, 2) AS UNSIGNED)) AS max_id
-                    FROM employee
-                ");
-                $rowEmp = $resultEmp->fetch_assoc();
-                $nextEmpNum = ($rowEmp['max_id'] ?? 0) + 1;
-                $emp_id = 'E' . str_pad($nextEmpNum, 3, '0', STR_PAD_LEFT);
-
-                $stmtInsertEmp = $conn->prepare(
-                    "INSERT INTO employee (emp_id, fname, lname, pub_id)
-                     VALUES (?, ?, ?, ?)"
-                );
-                $stmtInsertEmp->bind_param(
-                    "ssss",
-                    $emp_id,
-                    $fname,
-                    $lname,
-                    $pub_id
-                );
-                $stmtInsertEmp->execute();
-                $stmtInsertEmp->close();
-            }
-
-            /* ================================
-               3. LINK EMPLOYEE TO PUBLISHER
-               ================================ */
-            $stmtUpdate = $conn->prepare(
-                "UPDATE employee SET pub_id = ? WHERE emp_id = ?"
-            );
-            $stmtUpdate->bind_param("ss", $pub_id, $emp_id);
-            $stmtUpdate->execute();
-            $stmtUpdate->close();
-
-            $insert_success = true;
-            $publisher_search = "";
-            $employee_search  = "";
-
-        } else {
-            echo "<script>alert('Please enter employee as: Firstname Lastname');</script>";
-        }
+/* ==========================================================
+   HELPER: GET NEXT SEQUENTIAL ID
+========================================================== */
+function getNextId($conn, $table, $column, $prefix = "") {
+    if ($prefix !== "") {
+        $sql = "SELECT MAX(CAST(SUBSTRING($column, 2) AS UNSIGNED)) AS max_id FROM $table";
+    } else {
+        $sql = "SELECT MAX($column) AS max_id FROM $table";
     }
+
+    $result = $conn->query($sql);
+    $row = $result->fetch_assoc();
+    $next = ($row['max_id'] ?? 0) + 1;
+
+    if ($prefix !== "") {
+        return $prefix . str_pad($next, 8, "0", STR_PAD_LEFT);
+    }
+
+    return $next;
 }
 
+/* ==========================================================
+   ADD EMPLOYEE (SEQUENTIAL + NO DUPLICATES)
+========================================================== */
+if ($_SERVER["REQUEST_METHOD"] === "POST"
+    && isset($_POST['action'])
+    && $_POST['action'] === 'add_employee') {
+
+    // Check duplicate employee (same name + publisher)
+    $dup = $conn->prepare(
+        "SELECT emp_id FROM employee 
+         WHERE fname=? AND minit=? AND lname=? AND pub_id=?"
+    );
+    $dup->bind_param(
+        "ssss",
+        $_POST['fname'],
+        $_POST['minit'],
+        $_POST['lname'],
+        $_POST['pub_id']
+    );
+    $dup->execute();
+    $dup->store_result();
+
+    if ($dup->num_rows > 0) {
+        die("<script>alert('Employee already exists under this publisher.');</script>");
+    }
+    $dup->close();
+
+    // Generate sequential Emp ID
+    $gen_emp_id = getNextId($conn, "employee", "emp_id", "E");
+
+    $sql = "INSERT INTO employee 
+            (emp_id, fname, minit, lname, job_id, job_lvl, pub_id, hire_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("SQL Error: " . $conn->error);
+    }
+
+    $job_id = 1;
+    $stmt->bind_param(
+        "ssssiiss",
+        $gen_emp_id,
+        $_POST['fname'],
+        $_POST['minit'],
+        $_POST['lname'],
+        $job_id,
+        $_POST['job_lvl'],
+        $_POST['pub_id'],
+        $_POST['hire_date']
+    );
+
+    if ($stmt->execute()) {
+        $show_modal = true;
+        $success_message = "Employee Successfully Added!";
+    } else {
+        echo "<script>alert('Insert Error: {$stmt->error}');</script>";
+    }
+    $stmt->close();
+}
+
+/* ==========================================================
+   AJAX: ADD OR FIND PUBLISHER (SEQUENTIAL + NO DUPLICATES)
+========================================================== */
+if (isset($_GET['ajax_add_publisher'])) {
+    header('Content-Type: application/json');
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!$data) exit;
+
+    $pub_name = trim($data['pub_name']);
+
+    // Check existing publisher
+    $check = $conn->prepare(
+        "SELECT pub_id FROM publishers WHERE pub_name = ?"
+    );
+    $check->bind_param("s", $pub_name);
+    $check->execute();
+    $res = $check->get_result();
+
+    if ($res->num_rows > 0) {
+        echo json_encode([
+            "status" => "success",
+            "pub_id" => $res->fetch_assoc()['pub_id']
+        ]);
+        exit;
+    }
+    $check->close();
+
+    // Generate sequential Pub ID
+    $gen_pub_id = getNextId($conn, "publishers", "pub_id");
+
+    $stmt = $conn->prepare(
+        "INSERT INTO publishers (pub_id, pub_name, city, state, country)
+         VALUES (?, ?, ?, ?, ?)"
+    );
+
+    if (!$stmt) {
+        echo json_encode(["status" => "error", "message" => $conn->error]);
+        exit;
+    }
+
+    $stmt->bind_param(
+        "issss",
+        $gen_pub_id,
+        $pub_name,
+        $data['city'],
+        $data['state'],
+        $data['country']
+    );
+
+    if ($stmt->execute()) {
+        echo json_encode([
+            "status" => "success",
+            "pub_id" => $gen_pub_id
+        ]);
+    } else {
+        echo json_encode([
+            "status" => "error",
+            "message" => $stmt->error
+        ]);
+    }
+    exit;
+}
 ?>

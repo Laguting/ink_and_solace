@@ -12,333 +12,281 @@ require_once __DIR__ . "/bc_add_pub_title.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Publishers & Authors | Ink & Solace</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Add Publisher & Title</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
+        /* USING SAME STYLING AS PREVIOUS FILES */
         :root {
             --light-bg: #dbdbdb; 
             --dark-bg: #20252d;
             --input-bg: #f2f2f2;
-            --btn-confirm: #8f8989;
-            --btn-return: #3c4862;
-            --transition: all 0.3s ease;
+            --btn-add-color: #8f8989;    
+            --btn-return-color: #3c4862; 
+            --success-bg: #20252d;
+            --header-font: 'Cinzel', serif;
+            --body-font: 'Montserrat', sans-serif;
         }
 
         * { box-sizing: border-box; }
 
         html, body {
-            margin: 0; padding: 0;
-            height: 100%;
-            font-family: Arial, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            font-family: var(--body-font);
             background-color: var(--light-bg);
+            display: flex; flex-direction: column;
         }
 
-        body { display: flex; flex-direction: column; }
-
-        /* ================= TOP SECTION ================= */
+        /* HEADER */
         .top-section {
-            background-color: var(--dark-bg);
-            height: 45%;
-            position: relative;
-            display: flex;
-            flex-direction: column; 
-            justify-content: center;
-            align-items: center;
-            padding-top: 40px; 
+            background-color: var(--dark-bg); height: 250px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;
         }
+        /* Enlarged Logo */
+        .logo-top { position: absolute; top: 30px; left: 40px; width: 180px; }
+        
+        .page-title-img { width: 500px; max-width: 85%; height: auto; margin-top: 30px; }
+        .instruction-text { color: white; font-size: 14px; margin-top: 15px; opacity: 0.9; }
 
-        .logo-top {
-            position: absolute;
-            top: 30px;
-            width: 220px;
-            max-width: 40vw;
-            min-width: 180px;
+        /* MAIN SELECTION AREA */
+        .selection-container {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px; padding: 50px;
         }
-
-        .page-title-img {
-            width: 520px;
-            max-width: 90%;
-            margin-top: 60px; 
+        
+        /* Enlarged Main Buttons */
+        .big-btn {
+            padding: 20px 0; width: 350px;
+            border-radius: 50px; border: none;
+            font-family: var(--header-font); font-weight: 700; font-size: 18px;
+            color: white; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25); transition: transform 0.2s;
+            text-decoration: none; display: flex; justify-content: center; align-items: center;
         }
+        .big-btn:hover { transform: scale(1.03); }
+        .btn-add { background-color: var(--btn-add-color); }
+        .btn-return { background-color: var(--btn-return-color); }
 
-        .instruction-text {
-            color: #ffffff;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            margin-top: 15px; 
-            text-align: center;
-            opacity: 0.9;
-            letter-spacing: 0.5px;
-        }
-
-        /* ================= BOTTOM SECTION ================= */
-        .bottom-section {
-            background-color: var(--light-bg);
-            flex: 1;
-            padding: 20px 30px 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        form {
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-        }
-
-        /* ================= INPUT GROUP ================= */
-        .input-group {
-            margin-bottom: 22px;
-            text-align: left;
-        }
-
-        .label-img {
-            width: 180px;
-            margin: 0 0 10px 15px;
-            display: block; 
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 15px 20px; 
-            border-radius: 50px;
-            border: none;
-            outline: none;
-            background-color: var(--input-bg);
-            font-size: 16px;
-        }
-
-        .placeholder-img {
-            position: absolute;
-            left: 50px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 90px;
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        input:focus + .placeholder-img,
-        input:not(:placeholder-shown) + .placeholder-img {
-            display: none;
-        }
-
-        /* ================= BUTTONS ================= */
-        .btn-confirm-wrap,
-        .btn-return-wrap {
-            margin: 14px auto 0;
-            border-radius: 50px;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            border: none;
-            transition: transform 0.2s ease, filter 0.2s ease;
-        }
-
-        .btn-confirm-wrap {
-            background-color: var(--btn-confirm);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            padding: 10px 35px;
-        }
-
-        .btn-return-wrap {
-            background-color: var(--btn-return);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.25);
-            margin-top: 18px; 
-            padding: 14px 45px; 
-            max-width: 80%;
-        }
-
-        .btn-img {
-            display: block;
-            width: 90px; 
-        }
-
-        .btn-return-wrap .btn-img {
-            width: 180px; 
-            max-width: 100%;
-            height: auto;
-        }
-
-        .btn-confirm-wrap:hover, .btn-return-wrap:hover {
-            transform: scale(1.03); 
-            filter: brightness(1.1);
-        }
-
-        /* ================= MODAL PROMPT STYLES ================= */
+        /* MODAL FORMS */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: none; 
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
         }
 
-        .modal-box {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .form-card {
+            background-color: white; width: 900px; max-width: 95vw;
+            padding: 40px; border-radius: 20px; position: relative;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
         .close-icon {
-            position: absolute;
-            top: 15px; right: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-            line-height: 1;
+            position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; color: #555;
         }
 
-        .modal-box h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: var(--dark-bg);
-            margin-bottom: 20px;
-            font-size: 22px;
+        .form-title {
+            font-family: var(--header-font); font-size: 24px; color: var(--dark-bg);
+            text-align: center; margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 10px;
         }
 
-        .success-icon {
-            color: #4CAF50;
-            font-size: 40px;
-            margin-bottom: 10px;
-            display: block;
+        /* GRID FORM */
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 25px; text-align: left;
+        }
+        .full-width { grid-column: 1 / -1; }
+
+        .input-group { display: flex; flex-direction: column; }
+        
+        .text-label {
+            font-family: var(--header-font); font-size: 16px; font-weight: 700; color: #444;
+            margin-bottom: 8px; margin-left: 10px; text-transform: uppercase;
+        }
+        /* Enlarged Inputs */
+        .table-input {
+            width: 100%; padding: 15px 20px; border-radius: 50px; border: 1px solid #ccc;
+            background-color: var(--input-bg); font-family: var(--body-font); font-size: 15px;
         }
 
+        .submit-btn-container {
+            margin-top: 40px; display: flex; justify-content: center;
+        }
+        .submit-btn {
+            color: white; border: none; background-color: var(--btn-add-color);
+            padding: 15px 60px; border-radius: 30px; font-weight: 700; cursor: pointer;
+            font-family: var(--body-font); text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 16px;
+        }
+        .submit-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* SUCCESS MODAL (Dark Theme) */
+        .success-box {
+            background-color: var(--success-bg); width: 500px; padding: 50px; border-radius: 15px; text-align: center; color: white; display: flex; flex-direction: column; align-items: center; gap: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        .success-text { font-family: var(--header-font); font-size: 28px; line-height: 1.3; }
         .btn-done {
-            background-color: var(--btn-return);
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            border-radius: 50px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: bold;
-            cursor: pointer;
-            transition: var(--transition);
+            background-color: #f0f0f0; color: #20252d; border: none; padding: 12px 50px; border-radius: 30px; font-weight: 700; cursor: pointer; font-family: var(--body-font);
         }
 
-        .btn-done:hover {
-            background-color: #506180;
-        }
-
-        /* ================= FOOTER ================= */
-        footer {
-            display: flex;
-            justify-content: flex-end; 
-            align-items: center;
-            padding-top: 10px;
-        }
-
-        .footer-text-img {
-            width: 120px;
-        }
-
-        /* ================= RESPONSIVE ================= */
-        @media (max-width: 768px) {
-            .logo-top { width: 110px; top: 20px; }
-            .top-section { padding-top: 110px; }
-            .page-title-img { width: 380px; }
-            .btn-return-wrap { padding: 10px 30px; }
-            .btn-return-wrap .btn-img { width: 140px; }
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 
 <body>
 
-<div class="modal-overlay" id="updateModal">
-    <div class="modal-box">
-        <span class="close-icon" onclick="closeModal()">&times;</span>
-        <span class="success-icon">&#10004;</span>
-        <h2>Successfully added to database!</h2>
-        <button class="btn-done" onclick="closeModal()">DONE</button>
+<div class="modal-overlay <?php echo $show_modal ? '' : 'hidden'; ?>" id="successModal" style="<?php echo $show_modal ? 'display:flex;' : ''; ?>">
+    <div class="success-box">
+        <h2 class="success-text"><?php echo $success_message; ?></h2>
+        <button class="btn-done" onclick="window.location.href='add_publisher_title.php'">DONE</button>
     </div>
 </div>
 
 <div class="top-section">
     <img src="assets/text/logo.png" class="logo-top" alt="Logo">
     <img src="assets/text/title-publishers-titles.png" class="page-title-img" alt="Publishers & Titles">
-    
-    <p class="instruction-text">Please type the Publisher and the Title accurately to avoid data mismatch.</p>
+    <p class="instruction-text">Complete the Publisher information first, then proceed to Title information.</p>
 </div>
 
-<div class="bottom-section">
-    <div class="form-container">
-        <form id="publisherTitleForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
+<div class="selection-container">
+    <button class="big-btn btn-add" onclick="openModal('pubModal')">ADD NEW INPUT</button>
+    <a href="add_database.php" class="big-btn btn-return">Return to Main Menu</a>
+</div>
 
-            <div class="input-group">
-                <img src="assets/text/label-publisher.png" class="label-img" alt="Publisher">
-                <div class="input-wrapper">
-                    <input type="text" id="inputPublisher" name="publisher" placeholder=" " value="<?php echo htmlspecialchars($publisher_search); ?>" required>
-                    <img src="assets/text/placeholder-search.png" class="placeholder-img" alt="">
+<div class="modal-overlay hidden" id="pubModal">
+    <div class="form-card">
+        <span class="close-icon" onclick="closeModal('pubModal')">&times;</span>
+        <div class="form-title">STEP 1: ADD NEW PUBLISHER</div>
+        
+        <form id="pubForm" onsubmit="handlePublisherSubmit(event)">
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label class="text-label">Publisher Name</label>
+                    <input type="text" id="pub_name" class="table-input" required>
+                </div>
+                <div class="input-group">
+                    <label class="text-label">City</label>
+                    <input type="text" id="city" class="table-input" required>
+                </div>
+                <div class="input-group">
+                    <label class="text-label">State</label>
+                    <input type="text" id="state" class="table-input">
+                </div>
+                <div class="input-group full-width">
+                    <label class="text-label">Country</label>
+                    <input type="text" id="country" class="table-input" required>
                 </div>
             </div>
-
-            <div class="input-group">
-                <img src="assets/text/label-title.png" class="label-img" alt="Title">
-                <div class="input-wrapper">
-                    <input type="text" id="inputTitle" name="title" placeholder=" " value="<?php echo htmlspecialchars($title_search); ?>" required>
-                    <img src="assets/text/placeholder-search.png" class="placeholder-img" alt="">
-                </div>
+            <div class="submit-btn-container">
+                <button type="submit" class="submit-btn">CONFIRM & PROCEED TO TITLE</button>
             </div>
-
-            <button type="submit" class="btn-confirm-wrap">
-                <img src="assets/text/btn-confirm.png" class="btn-img" alt="Confirm">
-            </button>
-
-            <div style="display: block;">
-                <a href="add_database.php" style="text-decoration:none;">
-                    <div class="btn-return-wrap">
-                        <img src="assets/text/btn-return.png" class="btn-img" alt="Return to Main Menu">
-                    </div>
-                </a>
-            </div>
-
         </form>
     </div>
+</div>
 
-    <footer>
-        <img src="assets/text/footer-by-group2.png" class="footer-text-img" alt="">
-    </footer>
+<div class="modal-overlay hidden" id="titleModal">
+    <div class="form-card">
+        <span class="close-icon" onclick="closeModal('titleModal')">&times;</span>
+        <div class="form-title">STEP 2: ADD NEW TITLE</div>
+        
+        <form method="POST">
+            <input type="hidden" name="action" value="add_title">
+            
+            <input type="hidden" name="pub_id" id="hidden_pub_id">
+
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label class="text-label">Title Name</label>
+                    <input type="text" name="title" class="table-input" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="text-label">Type</label>
+                    <input type="text" name="type" class="table-input" placeholder="e.g. business" required>
+                </div>
+                
+                <div class="input-group">
+                    <label class="text-label">Pub Date</label>
+                    <input type="date" name="pubdate" class="table-input" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="text-label">Price</label>
+                    <input type="text" name="price" class="table-input">
+                </div>
+
+                <div class="input-group">
+                    <label class="text-label">Advance</label>
+                    <input type="text" name="advance" class="table-input">
+                </div>
+                
+                <div class="input-group">
+                    <label class="text-label">Royalty</label>
+                    <input type="number" name="royalty" class="table-input">
+                </div>
+
+                <div class="input-group">
+                    <label class="text-label">YTD Sales</label>
+                    <input type="number" name="ytd_sales" class="table-input">
+                </div>
+
+                <div class="input-group full-width">
+                    <label class="text-label">Notes</label>
+                    <input type="text" name="notes" class="table-input">
+                </div>
+            </div>
+            <div class="submit-btn-container">
+                <button type="submit" class="submit-btn" style="background-color: var(--btn-return-color);">FINISH & SAVE TITLE</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
-    // 1. Check PHP flag for success
-    const wasSuccessful = <?php echo json_encode($insert_success); ?>;
-
-    if (wasSuccessful) {
-        document.getElementById('updateModal').style.display = 'flex';
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.getElementById(id).style.display = 'flex';
     }
 
-    // 2. Close Modal
-    function closeModal() {
-        document.getElementById('updateModal').style.display = 'none';
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).style.display = 'none';
+    }
+
+    // Handles Step 1 (Publisher) submission via AJAX
+    function handlePublisherSubmit(e) {
+        e.preventDefault(); 
+
+        const data = {
+            pub_name: document.getElementById('pub_name').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            country: document.getElementById('country').value
+        };
+
+        // Call the AJAX endpoint at top of file
+        fetch('?ajax_add_publisher=1', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                // 1. Close Publisher Modal
+                closeModal('pubModal');
+                
+                // 2. Set the generated (or found) PUB_ID in the Title Form
+                document.getElementById('hidden_pub_id').value = result.pub_id;
+                
+                // 3. Open Title Modal
+                openModal('titleModal');
+            } else {
+                alert('Error adding publisher: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An unexpected error occurred. Check console.');
+        });
     }
 </script>
 
