@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 p.pub_name AS publisher,
                 t.title AS title,
                 CONCAT(a.au_fname, ' ', a.au_lname) AS author,
-                CONCAT('Royalty: ', ta.royaltyper, '%') AS info
+                CONCAT('Books Count: ', COUNT(DISTINCT t.title_id)) AS info
             FROM titles t
             JOIN publishers p ON t.pub_id = p.pub_id
             JOIN titleauthor ta ON t.title_id = ta.title_id
@@ -44,6 +44,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!empty($conditions)) {
             $sql .= " WHERE " . implode(" OR ", $conditions);
         }
+
+        $sql .= "
+            GROUP BY 
+                p.pub_id,
+                t.title_id,
+                a.au_id
+        ";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {

@@ -331,7 +331,7 @@ require_once __DIR__ . "/bc_us_view_pub_title.php";
             <label class="input-label">Publisher</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="publisher" placeholder="SEARCH" value="<?php echo htmlspecialchars($publisher_search); ?>">
+                <input type="text" name="publisher" placeholder="SEARCH BY PUBLISHER" value="<?php echo htmlspecialchars($publisher_search); ?>">
             </div>
         </div>
 
@@ -339,7 +339,7 @@ require_once __DIR__ . "/bc_us_view_pub_title.php";
             <label class="input-label">Title</label>
             <div class="input-wrapper">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35"></path></svg>
-                <input type="text" name="title" placeholder="SEARCH" value="<?php echo htmlspecialchars($title_search); ?>">
+                <input type="text" name="title" placeholder="SEARCH BY TITLE" value="<?php echo htmlspecialchars($title_search); ?>">
             </div>
         </div>
 
