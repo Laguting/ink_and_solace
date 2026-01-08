@@ -2,16 +2,13 @@
 require_once __DIR__ . "/bc_us_view_rep.php";
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | Ink & Solace</title>
-    
+    <title>View Books | Ink & Solace</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-
     <style>
         :root {
             --light-bg: #dbdbdb; 
@@ -20,296 +17,56 @@ require_once __DIR__ . "/bc_us_view_rep.php";
             --btn-return: #3c4862;
             --pill-color: #918a86; 
             --pill-hover: #a39c98;
+            --modal-bg: #2e343e;
         }
-
         * { box-sizing: border-box; }
-
-        html, body {
-            margin: 0; padding: 0;
-            min-height: 100vh;
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--light-bg);
-        }
-
+        html, body { margin: 0; padding: 0; min-height: 100vh; font-family: 'Montserrat', sans-serif; background-color: var(--light-bg); }
         body { display: flex; flex-direction: column; }
 
-        /* ================= TOP SECTION ================= */
-        .top-section {
-            background-color: var(--dark-bg);
-            height: 45vh; 
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center;
-        }
-
-        .header-content-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 40px; 
-        }
-
+        /* TOP SECTION */
+        .top-section { background-color: var(--dark-bg); height: 45vh; min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .header-content-group { display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .logo-top { width: 180px; height: auto; }
-        .page-title-img { width: 500px; max-width: 90%; height: auto; }
+        .page-title-text { font-family: 'Cinzel', serif; font-size: 80px; color: white; text-transform: uppercase; font-weight: 400; letter-spacing: 5px; margin: 0; line-height: 1; margin-bottom: 10px; }
+        .header-subtitle { font-family: 'Montserrat', sans-serif; color: white; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; margin: 0; font-weight: 300; opacity: 0.8; }
 
-        /* ================= BOTTOM SECTION ================= */
-        .bottom-section {
-            flex: 1;
-            padding: 50px 10% 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
+        /* BOTTOM SECTION */
+        .bottom-section { flex: 1; padding: 50px 10% 80px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .search-form { width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 40px; }
+        .search-container { width: 100%; max-width: 600px; position: relative; }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 50px; border: 1px solid #ccc; background-color: var(--input-bg); outline: none; font-family: 'Montserrat', sans-serif; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; color: #333; }
+        .btn-search-submit { background-color: var(--btn-return); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s, background-color 0.2s; height: 54px; }
+        .btn-search-submit:hover { transform: translateY(-2px); opacity: 0.9; }
 
-        /* SEARCH BAR STYLES */
-        .search-form {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center; 
-            gap: 15px; 
-            margin-bottom: 40px;
-        }
+        /* RESULTS LIST */
+        .results-list { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 700px; }
+        .report-pill { background-color: var(--pill-color); color: white; width: 100%; padding: 25px 40px; border-radius: 60px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.2s ease; cursor: pointer; border: none; }
+        .report-pill:hover { transform: translateY(-3px); background-color: var(--pill-hover); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .pill-left { display: flex; flex-direction: column; }
+        .rep-title { font-family: 'Cinzel', serif; font-size: 24px; text-transform: uppercase; margin-bottom: 5px; line-height: 1.2; font-weight: 700; }
+        .rep-details { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 400; opacity: 0.9; letter-spacing: 1px; text-transform: uppercase; }
 
-        .search-container {
-            width: 100%;
-            max-width: 600px; 
-            position: relative;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            opacity: 0.5;
-            color: #555;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 15px 15px 15px 55px;
-            border-radius: 50px;
-            border: 1px solid #ccc;
-            background-color: var(--input-bg);
-            outline: none;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 18px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #333;
-        }
-
-        /* SEARCH BUTTON STYLE */
-        .btn-search-submit {
-            background-color: var(--btn-return);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: transform 0.2s, background-color 0.2s;
-            height: 54px; 
-        }
-
-        .btn-search-submit:hover {
-            transform: translateY(-2px);
-            opacity: 0.9;
-        }
-
-        /* ================= RESULTS LIST STYLES ================= */
-        .results-list {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            width: 100%;
-            max-width: 700px;
-        }
-
-        .report-pill {
-            background-color: var(--pill-color);
-            color: white;
-            width: 100%;
-            padding: 20px 40px;
-            border-radius: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s, background-color 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .report-pill:hover {
-            transform: scale(1.02);
-            background-color: var(--pill-hover);
-        }
-
-        .rep-title {
-            font-family: 'Cinzel', serif;
-            font-size: 22px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-            line-height: 1.2;
-        }
-
-        .rep-details {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
-            font-weight: 300;
-            opacity: 0.9;
-        }
-
-        .no-results {
-            font-family: 'Cinzel', serif;
-            font-size: 20px;
-            color: #555;
-            margin-top: 20px;
-        }
-
-        /* ================= DETAIL MODAL STYLES ================= */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.75); 
-            backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 2000; animation: fadeIn 0.3s ease-out;
-            display: none; /* Hidden by default */
-        }
-
-        .detail-card {
-            background-color: var(--pill-color);
-            color: white;
-            width: 700px;
-            max-width: 90vw;
-            padding: 60px 50px;
-            border-radius: 20px;
-            position: relative;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Close X Button */
-        .close-card-x {
-            position: absolute; top: -20px; right: -20px;
-            width: 50px; height: 50px;
-            background-color: white; color: #333;
-            border-radius: 50%; border: none; font-size: 24px; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: 0.2s;
-        }
-        .close-card-x:hover { transform: scale(1.1); }
-
-        .dt-header {
-            font-family: 'Cinzel', serif;
-            font-size: 32px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            padding-bottom: 10px;
-            width: 100%;
-        }
-
-        .dt-sub {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            opacity: 0.9;
-        }
-
-        /* Styling for the books list */
-        .dt-body {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
-            font-weight: 300;
-            margin-bottom: 40px;
-            text-align: left;
-            width: 100%;
-            background-color: rgba(0,0,0,0.1);
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .books-label {
-            font-weight: 700;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 10px;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        .btn-card-back {
-            background-color: var(--btn-return);
-            color: white;
-            border: none;
-            padding: 12px 60px;
-            border-radius: 30px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            align-self: flex-end; 
-        }
-        .btn-card-back:hover { transform: translateY(-2px); }
-
-        /* ================= RETURN BUTTON (Footer) ================= */
-        .return-footer {
-            margin-top: 50px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .btn-return-wrap {
-            background-color: var(--btn-return);
-            padding: 12px 30px;
-            border-radius: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease;
-        }
+        /* MODAL STYLES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .detail-card { background-color: var(--modal-bg); color: white; width: 650px; max-width: 90vw; padding: 50px; border-radius: 15px; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.7); max-height: 85vh; overflow-y: auto; }
+        .close-card-x { position: absolute; top: 20px; right: 20px; width: 35px; height: 35px; background: none; color: white; border: 2px solid white; border-radius: 50%; cursor: pointer; font-weight: bold; }
         
-        .btn-return-wrap:hover {
-            transform: translateY(-2px);
-        }
+        .dt-header { font-family: 'Cinzel', serif; font-size: 36px; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 2px; }
+        .dt-subheader { font-family: 'Montserrat', sans-serif; font-size: 14px; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; }
 
+        /* BULLET LIST */
+        .book-ul { list-style: none; padding: 0; margin: 0; }
+        .book-li { padding: 12px 20px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; font-size: 16px; border-left: 5px solid var(--pill-color); font-weight: 400; line-height: 1.4; }
+        
+        .btn-card-close { background-color: var(--btn-return); color: white; border: none; padding: 15px 50px; border-radius: 50px; font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 20px; transition: transform 0.2s; }
+        .btn-card-close:hover { transform: scale(1.02); }
+
+        .return-footer { margin-top: 50px; display: flex; justify-content: center; }
+        .btn-return-wrap { background-color: var(--btn-return); padding: 12px 30px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.2s ease; }
+        .btn-return-wrap:hover { transform: translateY(-2px); }
         .btn-return-img { width: 160px; height: auto; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        @media (max-width: 768px) {
-            .page-title-img { width: 350px; }
-            .logo-top { width: 130px; }
-            .search-form { flex-direction: column; gap: 10px; }
-            .search-container { width: 100%; }
-            .btn-search-submit { width: 100%; }
-        }
     </style>
 </head>
 
@@ -318,38 +75,30 @@ require_once __DIR__ . "/bc_us_view_rep.php";
     <div class="top-section">
         <div class="header-content-group">
             <img src="assets/text/logo.png" class="logo-top" alt="Logo">
-            <img src="assets/text/title-report.png" class="page-title-img" alt="REPORT">
+            <h1 class="page-title-text">REPORT</h1>
+            <p class="header-subtitle">Publisher Inventory and Registered Titles.</p>
         </div>
     </div>
 
     <div class="bottom-section">
-        
-        <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="search-form">
+        <form method="POST" class="search-form">
             <div class="search-container">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" name="search_query" class="search-input" placeholder="SEARCH ENTRIES" value="<?php echo htmlspecialchars($search_query); ?>">
+                <input type="text" name="search_query" class="search-input" placeholder="SEARCH PUBLISHER OR BOOK" value="<?php echo htmlspecialchars($search_query); ?>">
             </div>
             <button type="submit" class="btn-search-submit">SEARCH</button>
         </form>
 
         <?php if ($has_searched): ?>
             <div class="results-list">
-                <?php if (count($search_results) > 0): ?>
-                    <?php foreach($search_results as $row): ?>
-                        
-                        <button class="report-pill" onclick='openReportDetail(
-                            <?php echo json_encode($row["publisher"]); ?>,
-                            <?php echo json_encode($row["author"]); ?>,
-                            <?php echo json_encode($row["count"]); ?>,
-                            <?php echo json_encode($row["books"]); ?>
-                        )'>
-                            <span class="rep-title"><?php echo htmlspecialchars($row['publisher']); ?></span>
-                            <span class="rep-details"><?php echo htmlspecialchars($row['author']); ?></span>
+                <?php if (count($grouped_results) > 0): ?>
+                    <?php foreach($grouped_results as $pubName => $data): ?>
+                        <button class="report-pill" onclick='openReportModal(<?php echo json_encode($data); ?>)'>
+                            <div class="pill-left">
+                                <span class="rep-title"><?php echo htmlspecialchars($pubName); ?></span>
+                                <span class="rep-details"><?php echo $data['count']; ?> TOTAL BOOKS</span>
+                            </div>
+                            <div class="pill-arrow">➜</div>
                         </button>
-
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="no-results">NO ENTRIES FOUND</div>
@@ -358,48 +107,62 @@ require_once __DIR__ . "/bc_us_view_rep.php";
         <?php endif; ?>
 
         <div class="return-footer">
-            <a href="menu.php" style="text-decoration:none;">
+            <a href="view_database.php" style="text-decoration:none;">
                 <div class="btn-return-wrap">
-                    <img src="assets/text/btn-return.png" class="btn-return-img" alt="Return to Main Menu">
+                    <img src="assets/text/btn-return.png" class="btn-return-img" alt="Return">
                 </div>
             </a>
         </div>
-
     </div>
 
     <div class="modal-overlay" id="detailModal">
         <div class="detail-card">
-            <button class="close-card-x" onclick="closeReportDetail()">X</button>
-            
-            <div class="dt-header" id="dt-publisher">Publisher Name</div>
-            
-            <div class="dt-sub" id="dt-author-count">Author Name | 0 Books</div>
-            
-            <div class="dt-body">
-                <span class="books-label">List of Books:</span>
-                <span id="dt-books">List content...</span>
-            </div>
-
-            <button class="btn-card-back" onclick="closeReportDetail()">Back</button>
+            <button class="close-card-x" onclick="closeModal()">✕</button>
+            <div class="dt-header" id="m-publisher">Publisher</div>
+            <div class="dt-subheader" id="m-count">Total Books: 0</div>
+            <div id="m-list-container">
+                </div>
+            <button class="btn-card-close" onclick="closeModal()">CLOSE</button>
         </div>
     </div>
 
     <script>
-        function openReportDetail(publisher, author, count, books) {
-            // Update modal content with specific fields
-            document.getElementById('dt-publisher').innerText = publisher;
-            document.getElementById('dt-author-count').innerText = author + " | " + count;
-            document.getElementById('dt-books').innerText = books;
+        function openReportModal(data) {
+            document.getElementById('m-publisher').innerText = data.publisher;
+            document.getElementById('m-count').innerText = "Total number of Books by that publisher: " + data.count;
+            
+            const listContainer = document.getElementById('m-list-container');
+            listContainer.innerHTML = '';
 
-            // Show the modal
+            // Split titles by our special separator ||
+            if (data.books && data.books.trim() !== "") {
+                const titles = data.books.split('||');
+                let listHtml = '<ul class="book-ul">';
+                titles.forEach(title => {
+                    if(title.trim() !== "") {
+                        listHtml += `<li class="book-li">${title.trim()}</li>`;
+                    }
+                });
+                listHtml += '</ul>';
+                listContainer.innerHTML = listHtml;
+            } else {
+                listContainer.innerHTML = '<p style="text-align:center; opacity:0.5; padding: 20px;">No books registered under this publisher.</p>';
+            }
+
             document.getElementById('detailModal').style.display = 'flex';
         }
 
-        function closeReportDetail() {
-            // Hide the modal   
+        function closeModal() {
             document.getElementById('detailModal').style.display = 'none';
         }
-    </script>
 
+        // Close modal when clicking outside the card
+        window.onclick = function(event) {
+            let modal = document.getElementById('detailModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>

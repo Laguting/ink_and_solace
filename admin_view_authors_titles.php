@@ -30,9 +30,9 @@ require_once __DIR__ . "/bc_view_au_title.php";
         .header-section { background-color: var(--dark-header); height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         
         /* FIXED POSITION LOGO */
-        .logo-small { position: absolute; top: 20px; left: 30px; width: 150px; } /* Enlarged */
+        .logo-small { position: absolute; top: 20px; left: 30px; width: 150px; } 
         
-        /* IMAGE TITLE (Replacing Text for better alignment) */
+        /* IMAGE TITLE */
         .page-title-img { width: 500px; max-width: 80%; height: auto; margin-top: 10px; }
 
         /* SEARCH FORM */
@@ -107,7 +107,15 @@ require_once __DIR__ . "/bc_view_au_title.php";
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: center; font-size: 13px; color: #333; }
         th { background: #f0f0f0; font-weight: 700; text-transform: uppercase; }
+        
         .table-input { width: 100%; padding: 5px; border: 1px solid #ccc; text-align: center; font-family: inherit; }
+        
+        /* DROPDOWN STYLING */
+        select.table-input {
+            text-align: left; /* Dropdowns look better left aligned */
+            height: 30px;     /* Ensure consistent height with text inputs */
+        }
+
         .action-btns { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
         
         /* SUCCESS / DELETE MODALS */
@@ -156,13 +164,13 @@ require_once __DIR__ . "/bc_view_au_title.php";
 
     <div class="main-content">
         <form class="search-container" method="POST">
-            <label class="search-label">AUTHOR SEARCH</label>
+            <label class="search-label">AUTHOR</label>
             <div class="input-group">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35" fill="none" stroke="#555" stroke-width="2"/></svg>
                 <input type="text" class="search-input" name="author_search" placeholder="Search by Author Name" value="<?php echo htmlspecialchars($author_search); ?>">
             </div>
 
-            <label class="search-label">TITLE SEARCH</label>
+            <label class="search-label">TITLE</label>
             <div class="input-group">
                 <svg class="search-icon" viewBox="0 0 24 24"><path d="M11 19c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zM21 21l-4.35-4.35" fill="none" stroke="#555" stroke-width="2"/></svg>
                 <input type="text" class="search-input" name="title_search" placeholder="Search by Book Title" value="<?php echo htmlspecialchars($title_search); ?>">
@@ -184,9 +192,6 @@ require_once __DIR__ . "/bc_view_au_title.php";
             <?php foreach($results_list as $row): 
                 $jsonData = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
                 $fullName = $row['au_fname'];
-                if(!empty($row['au_minit'])) {
-                    $fullName .= " " . $row['au_minit'] . ".";
-                }
                 $fullName .= " " . $row['au_lname'];
             ?>
                 <button class="result-item-btn" onclick='openDetails(<?php echo $jsonData; ?>)'>
@@ -208,9 +213,9 @@ require_once __DIR__ . "/bc_view_au_title.php";
             <div class="table-section-title">AUTHOR INFORMATION</div>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>AU_ID</th><th>Last Name</th><th>First Name</th><th>M.I.</th><th>Phone</th><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Contract</th></tr></thead>
+                    <thead><tr><th>AU_ID</th><th>Last Name</th><th>First Name</th><th>Phone</th><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Contract</th></tr></thead>
                     <tbody><tr>
-                        <td id="v_au_id"></td><td id="v_lname"></td><td id="v_fname"></td><td id="v_minit"></td><td id="v_phone"></td><td id="v_addr"></td><td id="v_city"></td><td id="v_state"></td><td id="v_zip"></td><td id="v_contract"></td>
+                        <td id="v_au_id"></td><td id="v_lname"></td><td id="v_fname"></td><td id="v_phone"></td><td id="v_addr"></td><td id="v_city"></td><td id="v_state"></td><td id="v_zip"></td><td id="v_contract"></td>
                     </tr></tbody>
                 </table>
             </div>
@@ -235,12 +240,11 @@ require_once __DIR__ . "/bc_view_au_title.php";
             <div class="table-section-title">EDIT AUTHOR</div>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>AU_ID</th><th>Last Name</th><th>First Name</th><th>MI</th><th>Phone</th><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Contract</th></tr></thead>
+                    <thead><tr><th>AU_ID</th><th>Last Name</th><th>First Name</th><th>Phone</th><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Contract</th></tr></thead>
                     <tbody><tr>
                         <td><input id="e_au_id" class="table-input" readonly style="background-color: #eee; cursor: not-allowed; color: #555;"></td>
                         <td><input id="e_lname" class="table-input"></td>
                         <td><input id="e_fname" class="table-input"></td>
-                        <td><input id="e_minit" class="table-input" maxlength="1"></td>
                         <td><input id="e_phone" class="table-input"></td>
                         <td><input id="e_addr" class="table-input"></td>
                         <td><input id="e_city" class="table-input"></td>
@@ -258,7 +262,55 @@ require_once __DIR__ . "/bc_view_au_title.php";
                     <tbody><tr>
                         <td><input id="e_title_id" class="table-input" readonly style="background-color: #eee; cursor: not-allowed; color: #555;"></td>
                         <td><input id="e_title" class="table-input"></td>
-                        <td><input id="e_type" class="table-input"></td>
+                        
+                        <td>
+                            <select id="e_type" class="table-input">
+                                <option value="" disabled selected>Select Type</option>
+                                <optgroup label="1. General Non-Fiction">
+                                    <option value="Arts & Recreation">Arts & Recreation</option>
+                                    <option value="Biographies & Memoirs">Biographies & Memoirs</option>
+                                    <option value="Business & Economics">Business & Economics</option>
+                                    <option value="History & Geography">History & Geography</option>
+                                    <option value="Philosophy & Psychology">Philosophy & Psychology</option>
+                                    <option value="Religion & Spirituality">Religion & Spirituality</option>
+                                    <option value="Science & Nature">Science & Nature</option>
+                                    <option value="Social Sciences">Social Sciences</option>
+                                    <option value="Technology & Applied Science">Technology & Applied Science</option>
+                                    <option value="True Crime">True Crime</option>
+                                </optgroup>
+                                <optgroup label="2. Fiction">
+                                    <option value="Action & Adventure">Action & Adventure</option>
+                                    <option value="Classics">Classics</option>
+                                    <option value="Contemporary Fiction">Contemporary Fiction</option>
+                                    <option value="Fantasy">Fantasy</option>
+                                    <option value="Historical Fiction">Historical Fiction</option>
+                                    <option value="Horror">Horror</option>
+                                    <option value="Literary Fiction">Literary Fiction</option>
+                                    <option value="Mystery & Thriller">Mystery & Thriller</option>
+                                    <option value="Romance">Romance</option>
+                                    <option value="Science Fiction">Science Fiction</option>
+                                </optgroup>
+                                <optgroup label="3. Visual & Alternative Formats">
+                                    <option value="Graphic Novels">Graphic Novels</option>
+                                    <option value="Manga">Manga</option>
+                                    <option value="Comic Books">Comic Books</option>
+                                    <option value="Large Print">Large Print</option>
+                                    <option value="Audiobooks">Audiobooks</option>
+                                </optgroup>
+                                <optgroup label="4. Specialized Collections">
+                                    <option value="Reference">Reference</option>
+                                    <option value="Periodicals">Periodicals</option>
+                                    <option value="Government Documents">Government Documents</option>
+                                    <option value="Special Collections/Archives">Special Collections/Archives</option>
+                                </optgroup>
+                                <optgroup label="5. Age-Specific Categories">
+                                    <option value="Children’s">Children’s (Board Books, Picture Books, Easy Readers)</option>
+                                    <option value="Young Adult (YA)">Young Adult (YA)</option>
+                                    <option value="Adult">Adult</option>
+                                </optgroup>
+                            </select>
+                        </td>
+
                         <td><input id="e_pub_id" class="table-input"></td>
                         <td><input id="e_price" class="table-input"></td>
                         <td><input id="e_advance" class="table-input"></td>
@@ -316,7 +368,6 @@ require_once __DIR__ . "/bc_view_au_title.php";
         document.getElementById('v_au_id').innerText = data.au_id;
         document.getElementById('v_lname').innerText = data.au_lname;
         document.getElementById('v_fname').innerText = data.au_fname;
-        document.getElementById('v_minit').innerText = data.au_minit || ''; 
         document.getElementById('v_phone').innerText = data.phone;
         document.getElementById('v_addr').innerText = data.address;
         document.getElementById('v_city').innerText = data.city;
@@ -347,13 +398,17 @@ require_once __DIR__ . "/bc_view_au_title.php";
         document.getElementById('editMode').classList.remove('hidden');
 
         const map = {
-            'e_au_id': currentData.au_id, 'e_lname': currentData.au_lname, 'e_fname': currentData.au_fname, 'e_minit': currentData.au_minit,
+            'e_au_id': currentData.au_id, 'e_lname': currentData.au_lname, 'e_fname': currentData.au_fname,
             'e_phone': currentData.phone, 'e_addr': currentData.address, 'e_city': currentData.city, 'e_state': currentData.state,
             'e_zip': currentData.zip, 'e_contract': currentData.contract, 'e_title_id': currentData.title_id, 'e_title': currentData.title,
             'e_type': currentData.type, 'e_pub_id': currentData.pub_id, 'e_price': currentData.price, 'e_advance': currentData.advance,
             'e_royalty': currentData.royalty, 'e_ytd': currentData.ytd_sales, 'e_notes': currentData.notes, 'e_pubdate': currentData.pubdate
         };
-        for(let id in map) document.getElementById(id).value = map[id] || '';
+        for(let id in map) {
+            if(document.getElementById(id)) {
+                document.getElementById(id).value = map[id] || '';
+            }
+        }
     }
 
     function cancelEdit() {
@@ -367,13 +422,16 @@ require_once __DIR__ . "/bc_view_au_title.php";
         formData.append('au_id', currentData.au_id); 
         formData.append('title_id', currentData.title_id);
 
-        const ids = ['e_au_id','e_lname','e_fname','e_minit','e_phone','e_addr','e_city','e_state','e_zip','e_contract',
+        const ids = ['e_au_id','e_lname','e_fname','e_phone','e_addr','e_city','e_state','e_zip','e_contract',
                      'e_title_id','e_title','e_type','e_pub_id','e_price','e_advance','e_royalty','e_ytd','e_notes','e_pubdate'];
-        const keys = ['au_id','au_lname','au_fname','au_minit','phone','address','city','state','zip','contract',
+        const keys = ['au_id','au_lname','au_fname','phone','address','city','state','zip','contract',
                       'title_id','title','type','pub_id','price','advance','royalty','ytd_sales','notes','pubdate'];
 
         ids.forEach((id, index) => {
-            formData.append(keys[index], document.getElementById(id).value);
+            let el = document.getElementById(id);
+            if(el) {
+                formData.append(keys[index], el.value);
+            }
         });
 
         fetch(window.location.href, { method: 'POST', body: formData })

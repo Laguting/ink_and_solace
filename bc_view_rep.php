@@ -1,59 +1,46 @@
 <?php
 require_once __DIR__ . "/bc_db_connect.php";
 
-$search_query = trim($_POST['search_query'] ?? "");
-$search_results = [];
-$has_searched = ($_SERVER["REQUEST_METHOD"] == "POST");
+$search_query = "";
+$grouped_results = []; 
+$has_searched = false;
 
-if ($has_searched) {
+// Handle Search Logic
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) {
+    $search_query = trim($_POST['search_query'] ?? "");
+    $has_searched = true;
 
-    /**
-     * SQL CHANGE:
-     * Changed LEFT JOIN to INNER JOIN. 
-     * This ensures that if a title doesn't have a publisher, 
-     * or a title doesn't have an author, it is excluded from results.
-     */
+    // LEFT JOIN ensures all publishers show up even if they have 0 books
+    // Using || as a separator for GROUP_CONCAT to handle titles with commas safely
     $sql = "SELECT 
-                t.title_id, t.title, 
-                p.pub_name, 
-                a.au_fname, a.au_lname,
-                ta.au_ord
-            FROM titles t
-            INNER JOIN publishers p ON t.pub_id = p.pub_id
-            INNER JOIN titleauthor ta ON t.title_id = ta.title_id
-            INNER JOIN authors a ON ta.au_id = a.au_id";
+                p.pub_id AS id,
+                p.pub_name AS publisher, 
+                COUNT(t.title_id) AS count, 
+                IFNULL(GROUP_CONCAT(t.title SEPARATOR '||'), '') AS books
+             FROM publishers p
+             LEFT JOIN titles t ON p.pub_id = t.pub_id";
 
-    $params = [];
-    $types = "";
-    
     if (!empty($search_query)) {
-        // Search publisher OR author
-        $sql .= " WHERE p.pub_name LIKE ? OR a.au_fname LIKE ? OR a.au_lname LIKE ?";
-        $param = "%" . $search_query . "%";
-        $params = [$param, $param, $param];
-        $types = "sss";
+        $sql .= " WHERE p.pub_name LIKE ? OR t.title LIKE ?";
     }
+
+    // Grouping strictly by publisher ID to combine all their books into one row
+    $sql .= " GROUP BY p.pub_id ORDER BY p.pub_name ASC";
 
     $stmt = $conn->prepare($sql);
-    if ($stmt) {
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        while ($row = $result->fetch_assoc()) {
-            $search_results[] = [
-                "id"        => $row['title_id'],
-                "publisher" => $row['pub_name'], // No longer need ?? "N/A" because of INNER JOIN
-                "author"    => trim($row['au_fname'] . " " . $row['au_lname']),
-                "title"     => $row['title'],
-                "count"     => $row['au_ord'] ?? 0
-            ];
-        }
-        $stmt->close();
-    } else {
-        die("SQL Prepare Error: " . $conn->error);
+    
+    if (!empty($search_query)) {
+        $term = "%" . $search_query . "%";
+        $stmt->bind_param("ss", $term, $term);
     }
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $pubName = trim($row['publisher']);
+            $grouped_results[$pubName] = $row;
+        }
+    }
+    $stmt->close();
 }
 ?>

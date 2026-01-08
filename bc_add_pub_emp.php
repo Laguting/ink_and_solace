@@ -91,62 +91,44 @@ if ($_SERVER["REQUEST_METHOD"] === "POST"
 ========================================================== */
 if (isset($_GET['ajax_add_publisher'])) {
     header('Content-Type: application/json');
-
     $data = json_decode(file_get_contents('php://input'), true);
     if (!$data) exit;
 
     $pub_name = trim($data['pub_name']);
 
-    // Check existing publisher
-    $check = $conn->prepare(
-        "SELECT pub_id FROM publishers WHERE pub_name = ?"
-    );
+    // 1. Precise Check: Case-insensitive name check
+    $check = $conn->prepare("SELECT pub_id FROM publishers WHERE LOWER(pub_name) = LOWER(?)");
     $check->bind_param("s", $pub_name);
     $check->execute();
     $res = $check->get_result();
 
     if ($res->num_rows > 0) {
-        echo json_encode([
-            "status" => "success",
-            "pub_id" => $res->fetch_assoc()['pub_id']
-        ]);
+        $existing = $res->fetch_assoc();
+        echo json_encode(["status" => "success", "pub_id" => $existing['pub_id'], "note" => "found existing"]);
         exit;
     }
     $check->close();
 
-    // Generate sequential Pub ID
-    $gen_pub_id = getNextId($conn, "publishers", "pub_id");
+    // 2. Insert with Error Handling for concurrent requests
+    $gen_pub_id = getNextId($conn, "publishers", "pub_id", "P");
+    $stmt = $conn->prepare("INSERT INTO publishers (pub_id, pub_name, city, state, country) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssss", $gen_pub_id, $pub_name, $data['city'], $data['state'], $data['country']);
 
-    $stmt = $conn->prepare(
-        "INSERT INTO publishers (pub_id, pub_name, city, state, country)
-         VALUES (?, ?, ?, ?, ?)"
-    );
-
-    if (!$stmt) {
-        echo json_encode(["status" => "error", "message" => $conn->error]);
-        exit;
-    }
-
-    $stmt->bind_param(
-        "issss",
-        $gen_pub_id,
-        $pub_name,
-        $data['city'],
-        $data['state'],
-        $data['country']
-    );
-
-    if ($stmt->execute()) {
-        echo json_encode([
-            "status" => "success",
-            "pub_id" => $gen_pub_id
-        ]);
-    } else {
-        echo json_encode([
-            "status" => "error",
-            "message" => $stmt->error
-        ]);
+    try {
+        if ($stmt->execute()) {
+            echo json_encode(["status" => "success", "pub_id" => $gen_pub_id]);
+        }
+    } catch (mysqli_sql_exception $e) {
+        if ($conn->errno === 1062) { // Duplicate entry error
+            // Catching if another process inserted it between our check and insert
+            $fallback = $conn->prepare("SELECT pub_id FROM publishers WHERE pub_name = ?");
+            $fallback->bind_param("s", $pub_name);
+            $fallback->execute();
+            $row = $fallback->get_result()->fetch_assoc();
+            echo json_encode(["status" => "success", "pub_id" => $row['pub_id']]);
+        } else {
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
     }
     exit;
 }
-?>

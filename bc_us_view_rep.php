@@ -2,57 +2,45 @@
 require_once __DIR__ . "/bc_db_connect.php";
 
 $search_query = "";
-$search_results = [];
+$grouped_results = []; 
 $has_searched = false;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// Handle Search Logic
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) {
     $search_query = trim($_POST['search_query'] ?? "");
     $has_searched = true;
 
-    // ==========================================================
-    // 3. SQL QUERY - JOIN titles, authors, publishers, titleauthor
-    // ==========================================================
-    if (empty($search_query)) {
-        $sql = "SELECT t.title AS book_title, 
-                       p.pub_name AS publisher_name, 
-                       CONCAT(a.au_fname, ' ', a.au_lname) AS author_name
-                FROM titles t
-                LEFT JOIN publishers p ON t.pub_id = p.pub_id
-                LEFT JOIN titleauthor ta ON t.title_id = ta.title_id
-                LEFT JOIN authors a ON ta.au_id = a.au_id
-                ORDER BY t.title";
-        $stmt = $conn->prepare($sql);
-    } else {
-        $sql = "SELECT t.title AS book_title, 
-                       p.pub_name AS publisher_name, 
-                       CONCAT(a.au_fname, ' ', a.au_lname) AS author_name
-                FROM titles t
-                LEFT JOIN publishers p ON t.pub_id = p.pub_id
-                LEFT JOIN titleauthor ta ON t.title_id = ta.title_id
-                LEFT JOIN authors a ON ta.au_id = a.au_id
-                WHERE t.title LIKE ? OR p.pub_name LIKE ? OR a.au_fname LIKE ? OR a.au_lname LIKE ?
-                ORDER BY t.title";
-        $stmt = $conn->prepare($sql);
+    // LEFT JOIN ensures all publishers show up even if they have 0 books
+    // Using || as a separator for GROUP_CONCAT to handle titles with commas safely
+    $sql = "SELECT 
+                p.pub_id AS id,
+                p.pub_name AS publisher, 
+                COUNT(t.title_id) AS count, 
+                IFNULL(GROUP_CONCAT(t.title SEPARATOR '||'), '') AS books
+             FROM publishers p
+             LEFT JOIN titles t ON p.pub_id = t.pub_id";
 
-        if ($stmt) {
-            $param = "%" . $search_query . "%";
-            $stmt->bind_param("ssss", $param, $param, $param, $param);
-        }
+    if (!empty($search_query)) {
+        $sql .= " WHERE p.pub_name LIKE ? OR t.title LIKE ?";
     }
 
-    // Execute and Fetch
-    if (isset($stmt) && $stmt->execute()) {
+    // Grouping strictly by publisher ID to combine all their books into one row
+    $sql .= " GROUP BY p.pub_id ORDER BY p.pub_name ASC";
+
+    $stmt = $conn->prepare($sql);
+    
+    if (!empty($search_query)) {
+        $term = "%" . $search_query . "%";
+        $stmt->bind_param("ss", $term, $term);
+    }
+    
+    if ($stmt->execute()) {
         $result = $stmt->get_result();
-
         while ($row = $result->fetch_assoc()) {
-            $search_results[] = [
-                'book'      => $row['book_title'],
-                'publisher' => $row['publisher_name'] ?? "Unknown",
-                'author'    => $row['author_name'] ?? "Unknown"
-            ];
+            $pubName = trim($row['publisher']);
+            $grouped_results[$pubName] = $row;
         }
-        $stmt->close();
     }
+    $stmt->close();
 }
-
 ?>
