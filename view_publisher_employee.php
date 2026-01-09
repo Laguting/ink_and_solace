@@ -161,7 +161,7 @@ require_once __DIR__ . "/bc_us_view_pub_emp.php";
         
         <div class="btn-wrapper">
             <button type="submit" class="btn btn-confirm">Search</button>
-            <a href="admin_view_database.php" class="btn btn-return">Return to Main Menu</a>
+            <a href="menu.php" class="btn btn-return">Return to Main Menu</a>
         </div>
     </form>
 </div>

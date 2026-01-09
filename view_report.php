@@ -107,7 +107,7 @@ require_once __DIR__ . "/bc_us_view_rep.php";
         <?php endif; ?>
 
         <div class="return-footer">
-            <a href="view_database.php" style="text-decoration:none;">
+            <a href="menu.php" style="text-decoration:none;">
                 <div class="btn-return-wrap">
                     <img src="assets/text/btn-return.png" class="btn-return-img" alt="Return">
                 </div>

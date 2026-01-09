@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/bc_view_au_title.php";
+
 ?>
 
 <!DOCTYPE html>

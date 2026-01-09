@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . "/bc_db_connect.php";
 
+$author_search = $_GET['author_id'] ?? null;
+$title_search = $_GET['title_id'] ?? null;
 $search_query = "";
 $grouped_results = []; 
-$has_searched = false;
+$has_results = false;
 
 // Handle Search Logic
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['action'])) {
